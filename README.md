@@ -35,42 +35,42 @@
 
 ## Design Data Management
 
-* **Health Route For all services**  
- 1. `GET or rpc /health`
-   * Response Body/Message: `{"ready":bool, "database": string{"connected" / "disconnected"}, "load" bool}` 
+1. **Health Route For all services**  
+  * `GET or rpc /health`
+  * Response Body/Message: `{"ready":bool, "database": string{"connected" / "disconnected"}, "load" bool}` 
 
-* **Geolocation Coordonates Decoder Service**
- 1. `POST /decode`
+2. **Geolocation Coordonates Decoder Service**
+ * `POST /decode`
    * Request Body: `{ "long": float, "lat": float }`
    * Response Body: `{ "city": string, "streetName":string}` 
 
 
-* **Police Reporting Service** 
-  1. `rpc /fetch`  
+3. **Police Reporting Service** 
+  * `rpc /fetch`  
    * Request Message: `{ "user_long": float, "user_lat": float, "city":string}`
    * Response Message: `{ "data": [ { "pol_long": float, "pol_lat": float, "confirmation_notification":bool, "confirmedBy": int } ]}` 
-  2. `rpc /postPolice` 
+  * `rpc /postPolice` 
    * Request Message: `{ "pol_long": float, "pol_lat": float, "city":string}`
    * Response Message: `{ "error": bool, "msg" : string }`  
-  3. `rpc /confirm` 
+  * `rpc /confirm` 
    * Request Message: `{ "pol_long": float, "pol_lat": float, "city":string, "confirmation":bool}`
    * Response Message: `{ "error": bool, "msg" : string }` 
  
-* **Accident Reporting Service**  
-  1. `rpc /fetch`  
+3. **Accident Reporting Service**  
+  * `rpc /fetch`  
    * Request Message: `{ "user_long": float, "user_lat": float }`
    * Response Message: `{ "data": [ { "accident_long": float, 
              "accident_lat": float, 
               "confirmation_accident_notification":bool, 
             "confirmation_police_notification":bool, 
                "confirmedBy": int } ]}`
-  2. `rpc /postAccident` 
+  * `rpc /postAccident` 
    * Request Message: `{ "accident_long": float, "accident_lat": float, "city":string, "streetName": string, "carsInvolved": int  }`
    * Response Message: `{ "error": bool, "msg" : string }`  
-  3. `rpc /confirmAccident` 
+  * `rpc /confirmAccident` 
    * Request Message: `{ "accident_long": float, "accident_lat": float, "confirmation":bool}`
    * Response Message: `{ "error": bool, "msg" : string }`  
-  4. `rpc /confirmPolice` 
+  * `rpc /confirmPolice` 
    * Request Message: `{ "accident_long": float, "accident_lat": float, "confirmation":bool}`
    * Response Message: `{ "error": bool, "msg" : string }`  
   
