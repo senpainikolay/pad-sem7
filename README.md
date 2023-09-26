@@ -58,9 +58,11 @@
    * Response Message: `{ "error": bool, "msg" : string }`  
   > `rpc /confirm` 
    * Request Message: `{ "pol_long": float, "pol_lat": float, "city":string, "confirmation":bool}`
-   * Response Message: `{ "error": bool, "msg" : string }` 
+   * Response Message: `{ "error": bool, "msg" : string }`  
+
+   <br>
   
-  <br>
+
 4. **Accident Reporting Service**  
   > `rpc /fetch`  
    * Request Message: `{ "user_long": float, "user_lat": float }`
@@ -78,7 +80,9 @@
   > `rpc /confirmPolice` 
    * Request Message: `{ "accident_long": float, "accident_lat": float, "confirmation":bool}`
    * Response Message: `{ "error": bool, "msg" : string }`  
+
+   <br>
   
-  <br>
+
 ## Deployment and Scaling 
 * For this purpose I will use Docket Containerization. The load balancers will be implemented from scratch ( accodordingly to the type of LB from requirements)
