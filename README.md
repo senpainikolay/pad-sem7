@@ -3,7 +3,7 @@
 ### _Group: FAF-202_  
 
 > **Idea Summary:** <br>
-> The users report police coordonates. On a get request (user_coords/location), the nearby police will be rendered.  Futher the next  users  would be notified on front-end and update the confirmation index (confirm that there is a policeman on thoose coordonates ) else, if that is a negative confirmation, the record  would be  deleted. After a specific time (15 mins) the confirmation process reapeats.
+> The users report police coordonates. On a get request (user_coords/location), the nearby police will be rendered.  Futher the next  users  would be notified on front-end and update the confirmation index (confirm that there is a policeman on thoose coordonates ) else, if that is a negative confirmation, the record  would be  deleted. After a specific time (15 mins) the confirmation process reapeats. <br>
 >The users can report accident's coordonates. Futher the users would update the confirmation index (confirm that there is an accident on thoose coordonates) else that would be a delete.  After a specific time (10 mins), on a new get request, the user is notified with a chained questions/requests ( is there still an accident ? is there the police?). If  it is a negative confirmation of an accident or the police is there, the accident record is  deleted. If the police is not there and the accident is still confirmed, the accident reporting microservice requests info from  police reporting service and the aggregated data is sent to an external emergency service ( if any police is found in the area of the accident). <br>
 > **DISCLAIMER:** this app/idea doesn't take in consideration ethical boundaries :-).
 
