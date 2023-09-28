@@ -51,7 +51,7 @@
 
 3. **Police Reporting Service** 
   > `rpc /fetch`  
-   * Request Message: `{ "user_long": float, "user_lat": float, "city":string}`
+   * Request Message: `{ "user_long": float, "user_lat": float, "zoom_index" :int, "city":string}`
    * Response Message: `{ "data": [ { "pol_long": float, "pol_lat": float, "confirmation_notification":bool, "confirmedBy": int } ]}` 
   > `rpc /postPolice` 
    * Request Message: `{ "pol_long": float, "pol_lat": float, "city":string}`
@@ -65,7 +65,7 @@
 
 4. **Accident Reporting Service**  
   > `rpc /fetch`  
-   * Request Message: `{ "user_long": float, "user_lat": float }`
+   * Request Message: `{ "user_long": float, "user_lat": float, "zoom_index" :int, }`
    * Response Message: `{ "data": [ { "accident_long": float, 
              "accident_lat": float, 
               "confirmation_accident_notification":bool, 
