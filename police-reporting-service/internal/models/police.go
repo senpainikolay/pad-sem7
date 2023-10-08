@@ -8,8 +8,7 @@ import (
 
 type PoliceEntity struct {
 	ID                       primitive.ObjectID `bson:"_id,omitempty"`
-	PolLong                  float64            `bson:"pol_long"`
-	PolLat                   float64            `bson:"pol_lat"`
+	Coordonates              []float64          `bson:"coordonates"`
 	ConfirmationNotification bool               `bson:"confirmation_notification"`
 	ConfirmedBy              int                `bson:"confirmed_by"`
 	CreatedAt                time.Time          `bson:"created_at"`

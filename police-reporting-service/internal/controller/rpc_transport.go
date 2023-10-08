@@ -2,8 +2,12 @@ package controller
 
 import (
 	"context"
+	"log"
+	"net"
 	"senpainikolay/pad-sem7/police-reporting-service/internal/models"
 	pb "senpainikolay/pad-sem7/police-reporting-service/internal/pb"
+
+	"google.golang.org/grpc"
 )
 
 type IPoliceReportingService interface {
@@ -15,6 +19,23 @@ type IPoliceReportingService interface {
 type PoliceReportingServer struct {
 	pb.UnimplementedPoliceReportingServiceServer
 	policeReportingSvc IPoliceReportingService
+}
+
+func Serve(police_service IPoliceReportingService, bind string) {
+	listener, err := net.Listen("tcp", bind)
+	if err != nil {
+		log.Fatalf("gRPC server error: failure to bind %v\n", bind)
+	}
+
+	grpcServer := grpc.NewServer()
+
+	policeServer := PoliceReportingServer{policeReportingSvc: police_service}
+
+	pb.RegisterPoliceReportingServiceServer(grpcServer, &policeServer)
+	log.Printf("gRPC API server listening on %v\n", bind)
+	if err := grpcServer.Serve(listener); err != nil {
+		log.Fatalf("gRPC server error: %v\n", err)
+	}
 }
 
 func (s *PoliceReportingServer) FetchPolice(ctx context.Context, req *pb.FetchPoliceRequest) (*pb.GetPoliceResponse, error) {
