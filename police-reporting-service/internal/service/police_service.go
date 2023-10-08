@@ -5,6 +5,8 @@ import "senpainikolay/pad-sem7/police-reporting-service/internal/models"
 type IPoliceRepository interface {
 	PostPolice(models.PolicePostInfo) error
 	FetchPolice(models.UserGeoInfo) (models.PoliceGeoInfoResponse, error)
+	UpdatePoliceCoordsConfirmation(models.PolicePostInfo) error
+	DeletePoliceCoords(models.PolicePostInfo) error
 }
 
 type PoliceService struct {
@@ -25,6 +27,11 @@ func (svc *PoliceService) Fetch(usrInfo models.UserGeoInfo) (models.PoliceGeoInf
 	return svc.policeRepo.FetchPolice(usrInfo)
 }
 
-func (svc *PoliceService) ConfirmPolice(models.ConfirmationPoliceInfo) error {
-	return nil
+func (svc *PoliceService) ConfirmPolice(confirmInfo models.ConfirmationPoliceInfo) error {
+
+	if confirmInfo.Confirmation == true {
+		return svc.policeRepo.UpdatePoliceCoordsConfirmation(confirmInfo.PoliceInfo)
+	}
+
+	return svc.policeRepo.DeletePoliceCoords(confirmInfo.PoliceInfo)
 }

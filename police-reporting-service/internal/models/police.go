@@ -41,7 +41,7 @@ type PolicePostInfo struct {
 }
 
 type ConfirmationPoliceInfo struct {
-	PolicePostInfo
+	PoliceInfo   PolicePostInfo
 	Confirmation bool `json:"confimation"`
 }
 

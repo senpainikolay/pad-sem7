@@ -112,13 +112,13 @@ func (s *PoliceReportingServer) ConfirmPolice(ctx context.Context, req *pb.Confi
 
 	return &pb.PoliceResponse{
 		Error: false,
-		Msg:   "confirmed succesfully",
+		Msg:   "confirmation received",
 	}, nil
 }
 
 func transformPBconfirmationToM(pbM *pb.ConfirmPoliceEntry) models.ConfirmationPoliceInfo {
 	return models.ConfirmationPoliceInfo{
-		PolicePostInfo: models.PolicePostInfo{
+		PoliceInfo: models.PolicePostInfo{
 			PolLong: pbM.PolLong,
 			PolLat:  pbM.PolLat,
 			City:    pbM.City,

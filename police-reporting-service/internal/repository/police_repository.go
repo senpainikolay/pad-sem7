@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"log"
+	"errors"
 	"time"
 
 	"senpainikolay/pad-sem7/police-reporting-service/internal/models"
@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+const CONFIRMATION_THRESHOLD = 2
 
 type PoliceRepository struct {
 	dbClient *mongo.Client
@@ -41,14 +43,10 @@ func (repo *PoliceRepository) FetchPolice(usrInfo models.UserGeoInfo) (models.Po
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	log.Println("KEKKEKEKE1")
-
 	filterCursor, err := cityCol.Find(ctx, filter)
 	if err != nil {
 		return models.PoliceGeoInfoResponse{}, err
 	}
-
-	log.Println("KEKKEKEKE2")
 
 	defer filterCursor.Close(ctx)
 
@@ -80,20 +78,19 @@ func (repo *PoliceRepository) FetchPolice(usrInfo models.UserGeoInfo) (models.Po
 }
 
 func updateConfirmationBool(pol *models.PoliceEntity, col *mongo.Collection) error {
-	durationInSeconds := pol.UpdatedAt.Unix() - pol.CreatedAt.Unix()
+	durationInSeconds := time.Now().Unix() - pol.UpdatedAt.Unix()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	log.Println(durationInSeconds)
-
-	if durationInSeconds > 5 && pol.ConfirmationNotification != true { // > 5 minutes => confirming the locations again
+	if durationInSeconds > 300 && pol.ConfirmationNotification != true { // > 5 minutes => confirming the locations again
 		_, err := col.UpdateOne(
 			ctx,
 			bson.M{"_id": pol.ID},
 			bson.D{
 				{"$set", bson.D{{"confirmation_notification", true},
 					{"updated_at", time.Now()},
+					{"confirmed_by", 0},
 				}},
 			},
 		)
@@ -158,5 +155,90 @@ func (repo *PoliceRepository) checkIfToCreateIndex(c *context.Context, cityName 
 		}
 	}
 	return true, nil
+
+}
+
+func (repo *PoliceRepository) UpdatePoliceCoordsConfirmation(polInfo models.PolicePostInfo) error {
+	cityCol := repo.dbClient.Database(repo.dbName).Collection(polInfo.City)
+
+	filter := bson.D{
+		{"location.coordinates", []float64{polInfo.PolLong, polInfo.PolLat}},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	polRes := cityCol.FindOne(ctx, filter)
+
+	var polEntity models.PoliceEntity
+	err := polRes.Decode(&polEntity)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return errors.New("coordinates not found!!")
+		}
+		return err
+	}
+
+	if polEntity.ConfirmedBy > CONFIRMATION_THRESHOLD && polEntity.ConfirmationNotification == true {
+		_, err = cityCol.UpdateOne(
+			ctx,
+			bson.M{"_id": polEntity.ID},
+			bson.D{{"$set", bson.D{
+				{"confirmation_notification", false},
+				{"updated_at", time.Now()},
+			}}},
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	if polEntity.ConfirmedBy <= CONFIRMATION_THRESHOLD {
+
+		_, err = cityCol.UpdateOne(
+			ctx,
+			bson.M{"_id": polEntity.ID},
+			bson.D{
+				{"$set", bson.D{
+					{"updated_at", time.Now()},
+					{"confirmed_by", polEntity.ConfirmedBy + 1},
+				}}},
+		)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+
+}
+
+func (repo *PoliceRepository) DeletePoliceCoords(polInfo models.PolicePostInfo) error {
+
+	cityCol := repo.dbClient.Database(repo.dbName).Collection(polInfo.City)
+
+	filter := bson.D{
+		{"location.coordinates", []float64{polInfo.PolLong, polInfo.PolLat}},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	polRes := cityCol.FindOne(ctx, filter)
+
+	var polEntity models.PoliceEntity
+	err := polRes.Decode(&polEntity)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return errors.New("coordinates not found!!")
+		}
+		return err
+	}
+
+	_, err = cityCol.DeleteOne(
+		ctx,
+		bson.M{"_id": polEntity.ID},
+	)
+
+	return err
 
 }
