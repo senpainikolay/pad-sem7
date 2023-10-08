@@ -6,9 +6,21 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type Location struct {
+	Type        string    `bson:"type"`
+	Coordinates []float64 `bson:"coordinates"`
+}
+
+func NewPoint(long, lat float64) Location {
+	return Location{
+		"Point",
+		[]float64{long, lat},
+	}
+}
+
 type PoliceEntity struct {
 	ID                       primitive.ObjectID `bson:"_id,omitempty"`
-	Coordonates              []float64          `bson:"coordonates"`
+	Location                 Location           `bson:"location"`
 	ConfirmationNotification bool               `bson:"confirmation_notification"`
 	ConfirmedBy              int                `bson:"confirmed_by"`
 	CreatedAt                time.Time          `bson:"created_at"`

@@ -1,28 +1,28 @@
 version: '3.9'
 services:
 
-  postgres:
-    container_name: postgres_pad
-    image: postgres:14-alpine
-    ports:
-      - 5432:5432
-    volumes:
-      - postgres-db:/data/postgres
-    environment:
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_USER=user
-      - POSTGRES_DB=test_db  
+  # postgres:
+  #   container_name: postgres_pad
+  #   image: postgres:14-alpine
+  #   ports:
+  #     - 5432:5432
+  #   volumes:
+  #     - postgres-db:/data/postgres
+  #   environment:
+  #     - POSTGRES_PASSWORD=password
+  #     - POSTGRES_USER=user
+  #     - POSTGRES_DB=test_db  
 
-  cache:
-    image: redis:6.2-alpine 
-    container_name: redis_pad
-    restart: always
-    ports:
-      - '6379:6379'
-    volumes: 
-      - cache:/data/redis
-    environment:
-      - REDIS_PASSWORD=password 
+  # cache:
+  #   image: redis:6.2-alpine 
+  #   container_name: redis_pad
+  #   restart: always
+  #   ports:
+  #     - '6379:6379'
+  #   volumes: 
+  #     - cache:/data/redis
+  #   environment:
+  #     - REDIS_PASSWORD=password 
 
   mongodb:
     image: mongo:6-jammy
@@ -34,9 +34,9 @@ services:
 
     
 volumes:
-  postgres-db:
-    driver: local 
-  cache:
-    driver: local 
+  # postgres-db:
+  #   driver: local 
+  # cache:
+  #   driver: local 
   mongodb:
     driver: local
