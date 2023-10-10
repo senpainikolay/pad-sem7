@@ -7,9 +7,10 @@ type AccidentModel struct {
 	ConfirmationAccidentNotification bool   `json:"confirmation_accident_notification"`
 	ConfirmationPoliceNotification   bool   `json:"confirmation_police_notification"`
 	ConfirmedBy                      int    `json:"confirmed_by"`
-	Coordinates                      string `gorm:"type:geometry(Point)"`
+	Coordinates                      string `gorm:"type:geometry(Point)`
 	City                             string `json:"city"`
 	StreetName                       string `json:"street_name"`
+	CarInvolved                      int64  `json:"cars_involved"`
 }
 
 type UserGeoInfo struct {
@@ -20,22 +21,28 @@ type UserGeoInfo struct {
 }
 
 type AccidentInfo struct {
-	PolLong float64 `json:"pol_long"`
-	PolLat  float64 `json:"pol_lat"`
-	City    string  `json:"city"`
+	Long                             float64 `json:"long"`
+	Lat                              float64 `json:"lat"`
+	ConfirmedBy                      int64   `json:"confirmed_by"`
+	ConfirmationAccidentNotification bool    `json:"confirmation_accident_notification"`
+	ConfirmationPoliceNotification   bool    `json:"confirmation_police_notification"`
 }
 
 type AccidentPostInfo struct {
-	AccidentInfo
-	StreetName string `json:"street_name"`
+	Long        float64 `json:"long"`
+	Lat         float64 `json:"lat"`
+	CarInvolved int64   `json:"cars_involved"`
+	City        string  `json:"city"`
+	StreetName  string  `json:"street_name"`
 }
 
-type ConfirmationPoliceInfo struct {
-	AccidentInfo         AccidentInfo
-	PoliceConfirmation   bool `json:"police_confimation"`
-	AccidentConfirmation bool `json:"accident_confimation"`
+type ConfirmationAccidentInfo struct {
+	Long                 float64 `json:"long"`
+	Lat                  float64 `json:"lat"`
+	PoliceConfirmation   bool    `json:"police_confimation"`
+	AccidentConfirmation bool    `json:"accident_confimation"`
 }
 
-type PoliceGeoInfoResponse struct {
-	Data []AccidentPostInfo `json:"data"`
+type AccidentGeoInfoResponse struct {
+	Data []AccidentInfo `json:"data"`
 }
