@@ -13,7 +13,7 @@ import (
 type IAccidentReportingService interface {
 	Fetch(models.UserGeoInfo) (models.AccidentGeoInfoResponse, error)
 	PostAccident(models.AccidentPostInfo) error
-	//ConfirmPolice(models.ConfirmationAccidentInfo) error
+	ConfirmAccident(models.ConfirmationAccidentInfo) error
 }
 
 type AccidentReportingServer struct {
@@ -101,4 +101,28 @@ func transformMarrToPB(arr []models.AccidentInfo) []*pb.AccidentInfo {
 	}
 	return newArr
 
+}
+
+func (s *AccidentReportingServer) ConfirmAccident(ctx context.Context, req *pb.ConfirmAccidentRequest) (*pb.GenericResponse, error) {
+
+	err := s.accReportingSvc.ConfirmAccident(transformPBconfirmationToM(req.Info))
+	if err != nil {
+		return &pb.GenericResponse{
+			Error: true,
+			Msg:   err.Error(),
+		}, err
+	}
+	return &pb.GenericResponse{
+		Error: false,
+		Msg:   "confirmation received",
+	}, nil
+}
+
+func transformPBconfirmationToM(pbM *pb.ConfirmAccidentEntry) models.ConfirmationAccidentInfo {
+	return models.ConfirmationAccidentInfo{
+		Long:                 pbM.AccidentLong,
+		Lat:                  pbM.AccidentLat,
+		PoliceConfirmation:   pbM.PoliceConfirmation,
+		AccidentConfirmation: pbM.AccidentConfirmation,
+	}
 }
