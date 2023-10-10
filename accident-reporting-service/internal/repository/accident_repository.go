@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"senpainikolay/pad-sem7/accident-reporting-service/internal/models"
@@ -32,21 +33,29 @@ func (repo *AccidentRepository) PostAccident(acc *models.AccidentModel) error {
 	return nil
 }
 
-func (repo *AccidentRepository) GetByPos(lon, lat float64) (*models.AccidentModel, error) {
+func (repo *AccidentRepository) GetByPos(lon, lat float64) (models.AccidentModel, error) {
 
 	var acc models.AccidentModel
 
 	query := "SELECT * FROM accident_models WHERE ST_X(coordinates) = ? AND ST_Y(coordinates) = ?"
 	err := repo.dbClient.Raw(query, lon, lat).Scan(&acc).Error
-	return &acc, err
+	if acc.CarInvolved == 0 {
+		return acc, errors.New("could not find the model in db")
+	}
+
+	return acc, err
 
 }
 
 func (repo *AccidentRepository) DeleteByPos(lon, lat float64) error {
+	log.Println("UGGAAA BUNGA")
 
 	query := "DELETE FROM accident_models WHERE ST_X(coordinates) = ? AND ST_Y(coordinates) = ?"
 	err := repo.dbClient.Exec(query, lon, lat).Error
-	return err
+	if err != nil {
+		return errors.New("something wrong with the coords")
+	}
+	return nil
 }
 
 func (repo *AccidentRepository) FetchAccidents(usrInfo models.UserGeoInfo) (models.AccidentGeoInfoResponse, error) {

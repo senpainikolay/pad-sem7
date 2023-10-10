@@ -2,15 +2,15 @@ package service
 
 import (
 	"fmt"
-	"log"
 	"senpainikolay/pad-sem7/accident-reporting-service/internal/models"
+	policeserviceclient "senpainikolay/pad-sem7/accident-reporting-service/internal/police-service-client"
 	"time"
 )
 
 type IAccidentRepository interface {
 	FetchAccidents(models.UserGeoInfo) (models.AccidentGeoInfoResponse, error)
 	PostAccident(*models.AccidentModel) error
-	GetByPos(float64, float64) (*models.AccidentModel, error)
+	GetByPos(float64, float64) (models.AccidentModel, error)
 	DeleteByPos(float64, float64) error
 	UpdateAccConfirmationNot(uint, bool) error
 	UpdateAccConfirmationIndex(uint, int) error
@@ -52,8 +52,15 @@ func (svc *AccidentService) ConfirmAccident(confInfo models.ConfirmationAccident
 		return err
 	}
 
-	if (time.Now().Unix()-acc.CreatedAt.Unix()) > 1100 && !confInfo.PoliceConfirmation && confInfo.AccidentConfirmation {
-		log.Println("INFORMMMMMM EXTERNALLLL CALL TO 2nd MICRO")
+	if (time.Now().Unix()-acc.CreatedAt.Unix()) > 1 && !confInfo.PoliceConfirmation && confInfo.AccidentConfirmation {
+		var data models.ExernalServiceData
+		data.CarsInvolved = int(acc.CarInvolved)
+		data.City = acc.City
+		data.StreetName = acc.StreetName
+		err = policeserviceclient.InformExternalService(data, confInfo.Long, confInfo.Lat)
+		if err != nil {
+			return err
+		}
 		return svc.accidentRepo.DeleteByPos(confInfo.Long, confInfo.Lat)
 	}
 
