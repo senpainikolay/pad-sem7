@@ -2,6 +2,7 @@ package policeserviceclient
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -33,7 +34,10 @@ func InformExternalService(data models.ExernalServiceData, long, lat float64) er
 		},
 	})
 	if err != nil {
-		return nil
+		if err == context.DeadlineExceeded {
+			return errors.New("context deadline exceeded")
+		}
+		return err
 	}
 	for _, v := range res.PoliceInfo {
 		data.NearbyPolice = append(data.NearbyPolice,
