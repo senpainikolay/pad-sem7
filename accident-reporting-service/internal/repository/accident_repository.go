@@ -131,3 +131,14 @@ func (repo *AccidentRepository) UpdateAccConfirmationIndex(id uint, curr int) er
 	return err
 
 }
+
+func (repo *AccidentRepository) Ping() error {
+
+	db, err := repo.dbClient.DB()
+	if err != nil {
+		return err
+	}
+	err = db.Ping()
+	return err
+
+}

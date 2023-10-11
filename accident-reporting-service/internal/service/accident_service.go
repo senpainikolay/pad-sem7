@@ -6,6 +6,8 @@ import (
 	"senpainikolay/pad-sem7/accident-reporting-service/internal/models"
 	policeserviceclient "senpainikolay/pad-sem7/accident-reporting-service/internal/police-service-client"
 	"time"
+
+	"golang.org/x/time/rate"
 )
 
 type IAccidentRepository interface {
@@ -15,6 +17,7 @@ type IAccidentRepository interface {
 	DeleteByPos(float64, float64) error
 	UpdateAccConfirmationNot(uint, bool) error
 	UpdateAccConfirmationIndex(uint, int) error
+	Ping() error
 }
 
 const THRESHOLD_TIMEOUT_SERVICE_CALL = 900
@@ -72,5 +75,27 @@ func (svc *AccidentService) ConfirmAccident(confInfo models.ConfirmationAccident
 	}
 
 	return svc.accidentRepo.UpdateAccConfirmationIndex(acc.ID, acc.ConfirmedBy)
+
+}
+
+func (svc *AccidentService) CheckHealth(rl *rate.Limiter) models.HealthInfo {
+	healthInfo := models.HealthInfo{
+		Ready:    true,
+		Database: "connected",
+		Load:     false,
+	}
+
+	err := svc.accidentRepo.Ping()
+	if err != nil {
+		healthInfo.Database = "disconnected"
+		healthInfo.Ready = false
+	}
+
+	if !rl.Allow() {
+		healthInfo.Load = true
+		healthInfo.Ready = false
+
+	}
+	return healthInfo
 
 }

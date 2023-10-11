@@ -17,6 +17,7 @@ type IAccidentReportingService interface {
 	Fetch(models.UserGeoInfo) (models.AccidentGeoInfoResponse, error)
 	PostAccident(models.AccidentPostInfo) error
 	ConfirmAccident(models.ConfirmationAccidentInfo) error
+	CheckHealth(*rate.Limiter) models.HealthInfo
 }
 
 type AccidentReportingServer struct {
@@ -24,21 +25,26 @@ type AccidentReportingServer struct {
 	accReportingSvc IAccidentReportingService
 }
 
+var LIMITER = rate.NewLimiter(1, 1)
+
 func Serve(acc_service IAccidentReportingService, bind string) {
 	listener, err := net.Listen("tcp", bind)
 	if err != nil {
 		log.Fatalf("gRPC server error: failure to bind %v\n", bind)
 	}
 
-	limiter := rate.NewLimiter(1, 1)
-
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(
 			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-				if !limiter.Allow() {
-					return nil, status.Error(codes.ResourceExhausted, "rate limit exceeded")
+				switch info.FullMethod {
+				case "/proto.AccidentReportingService/HealthCheck":
+					return handler(ctx, req)
+				default:
+					if !LIMITER.Allow() {
+						return nil, status.Error(codes.ResourceExhausted, "rate limit exceeded")
+					}
+					return handler(ctx, req)
 				}
-				return handler(ctx, req)
 			},
 		),
 	)
@@ -49,6 +55,22 @@ func Serve(acc_service IAccidentReportingService, bind string) {
 	log.Printf("gRPC API server listening on %v\n", bind)
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("gRPC server error: %v\n", err)
+	}
+}
+
+func (s *AccidentReportingServer) HealthCheck(ctx context.Context, req *pb.HealthRequest) (*pb.HealthResponse, error) {
+
+	healthInfo := s.accReportingSvc.CheckHealth(LIMITER)
+
+	return transformHealthMtoPB(healthInfo), nil
+
+}
+
+func transformHealthMtoPB(m models.HealthInfo) *pb.HealthResponse {
+	return &pb.HealthResponse{
+		Ready:    m.Ready,
+		Database: m.Database,
+		Load:     m.Load,
 	}
 }
 

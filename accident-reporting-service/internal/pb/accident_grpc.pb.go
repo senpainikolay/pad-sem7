@@ -24,6 +24,7 @@ const (
 	AccidentReportingService_FetchAccidents_FullMethodName  = "/proto.AccidentReportingService/FetchAccidents"
 	AccidentReportingService_PostAccident_FullMethodName    = "/proto.AccidentReportingService/PostAccident"
 	AccidentReportingService_ConfirmAccident_FullMethodName = "/proto.AccidentReportingService/ConfirmAccident"
+	AccidentReportingService_HealthCheck_FullMethodName     = "/proto.AccidentReportingService/HealthCheck"
 )
 
 // AccidentReportingServiceClient is the client API for AccidentReportingService service.
@@ -33,6 +34,7 @@ type AccidentReportingServiceClient interface {
 	FetchAccidents(ctx context.Context, in *FetchAccidentRequest, opts ...grpc.CallOption) (*GetAccidentResponse, error)
 	PostAccident(ctx context.Context, in *PostAccidentRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	ConfirmAccident(ctx context.Context, in *ConfirmAccidentRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	HealthCheck(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error)
 }
 
 type accidentReportingServiceClient struct {
@@ -70,6 +72,15 @@ func (c *accidentReportingServiceClient) ConfirmAccident(ctx context.Context, in
 	return out, nil
 }
 
+func (c *accidentReportingServiceClient) HealthCheck(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error) {
+	out := new(HealthResponse)
+	err := c.cc.Invoke(ctx, AccidentReportingService_HealthCheck_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccidentReportingServiceServer is the server API for AccidentReportingService service.
 // All implementations must embed UnimplementedAccidentReportingServiceServer
 // for forward compatibility
@@ -77,6 +88,7 @@ type AccidentReportingServiceServer interface {
 	FetchAccidents(context.Context, *FetchAccidentRequest) (*GetAccidentResponse, error)
 	PostAccident(context.Context, *PostAccidentRequest) (*GenericResponse, error)
 	ConfirmAccident(context.Context, *ConfirmAccidentRequest) (*GenericResponse, error)
+	HealthCheck(context.Context, *HealthRequest) (*HealthResponse, error)
 	mustEmbedUnimplementedAccidentReportingServiceServer()
 }
 
@@ -92,6 +104,9 @@ func (UnimplementedAccidentReportingServiceServer) PostAccident(context.Context,
 }
 func (UnimplementedAccidentReportingServiceServer) ConfirmAccident(context.Context, *ConfirmAccidentRequest) (*GenericResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConfirmAccident not implemented")
+}
+func (UnimplementedAccidentReportingServiceServer) HealthCheck(context.Context, *HealthRequest) (*HealthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
 }
 func (UnimplementedAccidentReportingServiceServer) mustEmbedUnimplementedAccidentReportingServiceServer() {
 }
@@ -161,6 +176,24 @@ func _AccidentReportingService_ConfirmAccident_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccidentReportingService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccidentReportingServiceServer).HealthCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccidentReportingService_HealthCheck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccidentReportingServiceServer).HealthCheck(ctx, req.(*HealthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AccidentReportingService_ServiceDesc is the grpc.ServiceDesc for AccidentReportingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -179,6 +212,10 @@ var AccidentReportingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ConfirmAccident",
 			Handler:    _AccidentReportingService_ConfirmAccident_Handler,
+		},
+		{
+			MethodName: "HealthCheck",
+			Handler:    _AccidentReportingService_HealthCheck_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

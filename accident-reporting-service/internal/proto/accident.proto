@@ -49,6 +49,15 @@ message GenericResponse {
     string msg = 2; 
 }  
 
+message HealthResponse { 
+    bool ready =1; 
+    string database = 2;  
+    bool load =3; 
+}  
+
+
+message HealthRequest {}
+
 
 message FetchAccidentRequest { GetAccidentUserEntry user_info =1; } 
 message PostAccidentRequest { PostAccidentEntry accident_info =1; } 
@@ -59,7 +68,9 @@ message ConfirmAccidentRequest { ConfirmAccidentEntry info  =1; }
 service AccidentReportingService {
     rpc FetchAccidents(FetchAccidentRequest) returns (GetAccidentResponse) {}
     rpc PostAccident(PostAccidentRequest) returns (GenericResponse) {}
-    rpc ConfirmAccident(ConfirmAccidentRequest) returns (GenericResponse) {}
+    rpc ConfirmAccident(ConfirmAccidentRequest) returns (GenericResponse) {} 
+    rpc HealthCheck(HealthRequest) returns (HealthResponse) {}
+
   }
    
 
