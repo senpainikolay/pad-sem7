@@ -24,6 +24,7 @@ const (
 	PoliceReportingService_FetchPolice_FullMethodName   = "/proto.PoliceReportingService/FetchPolice"
 	PoliceReportingService_PostPolice_FullMethodName    = "/proto.PoliceReportingService/PostPolice"
 	PoliceReportingService_ConfirmPolice_FullMethodName = "/proto.PoliceReportingService/ConfirmPolice"
+	PoliceReportingService_HealthCheck_FullMethodName   = "/proto.PoliceReportingService/HealthCheck"
 )
 
 // PoliceReportingServiceClient is the client API for PoliceReportingService service.
@@ -33,6 +34,7 @@ type PoliceReportingServiceClient interface {
 	FetchPolice(ctx context.Context, in *FetchPoliceRequest, opts ...grpc.CallOption) (*GetPoliceResponse, error)
 	PostPolice(ctx context.Context, in *PostPoliceRequest, opts ...grpc.CallOption) (*PoliceResponse, error)
 	ConfirmPolice(ctx context.Context, in *ConfirmPoliceRequest, opts ...grpc.CallOption) (*PoliceResponse, error)
+	HealthCheck(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error)
 }
 
 type policeReportingServiceClient struct {
@@ -70,6 +72,15 @@ func (c *policeReportingServiceClient) ConfirmPolice(ctx context.Context, in *Co
 	return out, nil
 }
 
+func (c *policeReportingServiceClient) HealthCheck(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error) {
+	out := new(HealthResponse)
+	err := c.cc.Invoke(ctx, PoliceReportingService_HealthCheck_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PoliceReportingServiceServer is the server API for PoliceReportingService service.
 // All implementations must embed UnimplementedPoliceReportingServiceServer
 // for forward compatibility
@@ -77,6 +88,7 @@ type PoliceReportingServiceServer interface {
 	FetchPolice(context.Context, *FetchPoliceRequest) (*GetPoliceResponse, error)
 	PostPolice(context.Context, *PostPoliceRequest) (*PoliceResponse, error)
 	ConfirmPolice(context.Context, *ConfirmPoliceRequest) (*PoliceResponse, error)
+	HealthCheck(context.Context, *HealthRequest) (*HealthResponse, error)
 	mustEmbedUnimplementedPoliceReportingServiceServer()
 }
 
@@ -92,6 +104,9 @@ func (UnimplementedPoliceReportingServiceServer) PostPolice(context.Context, *Po
 }
 func (UnimplementedPoliceReportingServiceServer) ConfirmPolice(context.Context, *ConfirmPoliceRequest) (*PoliceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConfirmPolice not implemented")
+}
+func (UnimplementedPoliceReportingServiceServer) HealthCheck(context.Context, *HealthRequest) (*HealthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
 }
 func (UnimplementedPoliceReportingServiceServer) mustEmbedUnimplementedPoliceReportingServiceServer() {
 }
@@ -161,6 +176,24 @@ func _PoliceReportingService_ConfirmPolice_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PoliceReportingService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PoliceReportingServiceServer).HealthCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PoliceReportingService_HealthCheck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PoliceReportingServiceServer).HealthCheck(ctx, req.(*HealthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PoliceReportingService_ServiceDesc is the grpc.ServiceDesc for PoliceReportingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -179,6 +212,10 @@ var PoliceReportingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ConfirmPolice",
 			Handler:    _PoliceReportingService_ConfirmPolice_Handler,
+		},
+		{
+			MethodName: "HealthCheck",
+			Handler:    _PoliceReportingService_HealthCheck_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

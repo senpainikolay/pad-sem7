@@ -1,12 +1,17 @@
 package service
 
-import "senpainikolay/pad-sem7/police-reporting-service/internal/models"
+import (
+	"senpainikolay/pad-sem7/police-reporting-service/internal/models"
+
+	"golang.org/x/time/rate"
+)
 
 type IPoliceRepository interface {
 	PostPolice(models.PolicePostInfo) error
 	FetchPolice(models.UserGeoInfo) (models.PoliceGeoInfoResponse, error)
 	UpdatePoliceCoordsConfirmation(models.PolicePostInfo) error
 	DeletePoliceCoords(models.PolicePostInfo) error
+	Ping() error
 }
 
 type PoliceService struct {
@@ -34,4 +39,26 @@ func (svc *PoliceService) ConfirmPolice(confirmInfo models.ConfirmationPoliceInf
 	}
 
 	return svc.policeRepo.DeletePoliceCoords(confirmInfo.PoliceInfo)
+}
+
+func (svc *PoliceService) CheckHealth(rl *rate.Limiter) models.HealthInfo {
+	healthInfo := models.HealthInfo{
+		Ready:    true,
+		Database: "connected",
+		Load:     false,
+	}
+
+	err := svc.policeRepo.Ping()
+	if err != nil {
+		healthInfo.Database = "disconnected"
+		healthInfo.Ready = false
+	}
+
+	if !rl.Allow() {
+		healthInfo.Load = true
+		healthInfo.Ready = false
+
+	}
+	return healthInfo
+
 }

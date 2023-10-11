@@ -40,9 +40,17 @@ message PoliceInfo {
 
 message GetPoliceResponse {  
     repeated PoliceInfo police_info = 1;
-} 
+}  
 
 
+message HealthResponse { 
+    bool ready =1; 
+    string database = 2;  
+    bool load =3; 
+}  
+
+
+message HealthRequest {}
 message FetchPoliceRequest { GetPoliceUserEntry user_info =1; } 
 message PostPoliceRequest { PostPoliceEntry police_info =1; } 
 message ConfirmPoliceRequest { ConfirmPoliceEntry police_info =1; }
@@ -53,7 +61,8 @@ message ConfirmPoliceRequest { ConfirmPoliceEntry police_info =1; }
 service PoliceReportingService {
     rpc FetchPolice(FetchPoliceRequest) returns (GetPoliceResponse) {}
     rpc PostPolice(PostPoliceRequest) returns (PoliceResponse) {}
-    rpc ConfirmPolice(ConfirmPoliceRequest) returns (PoliceResponse) {}
+    rpc ConfirmPolice(ConfirmPoliceRequest) returns (PoliceResponse) {} 
+    rpc HealthCheck(HealthRequest) returns (HealthResponse) {}
   }
    
 
