@@ -7,7 +7,10 @@ import (
 	"senpainikolay/pad-sem7/police-reporting-service/internal/models"
 	pb "senpainikolay/pad-sem7/police-reporting-service/internal/pb"
 
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type IPoliceReportingService interface {
@@ -27,7 +30,18 @@ func Serve(police_service IPoliceReportingService, bind string) {
 		log.Fatalf("gRPC server error: failure to bind %v\n", bind)
 	}
 
-	grpcServer := grpc.NewServer()
+	limiter := rate.NewLimiter(1, 1)
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+				if !limiter.Allow() {
+					return nil, status.Error(codes.ResourceExhausted, "rate limit exceeded")
+				}
+				return handler(ctx, req)
+			},
+		),
+	)
 
 	policeServer := PoliceReportingServer{policeReportingSvc: police_service}
 
