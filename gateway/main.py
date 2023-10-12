@@ -9,6 +9,8 @@ from pydantic import BaseModel
 city_harcoded = "chisinau"
 street_hardcoded = "vm 99"
 
+TIMEOUT_SECONDS = 5
+
 police_channel = grpc.insecure_channel('localhost:6666')
 POLICE_SERVICE_STUB = police_pb2_grpc.PoliceReportingServiceStub(police_channel) 
 
@@ -38,10 +40,9 @@ async def fetch_police(params: UserGeoInfo):
     req = police_pb2.FetchPoliceRequest(user_info=user_info)
 
     try:
-        response = POLICE_SERVICE_STUB.FetchPolice(req) 
+        response = POLICE_SERVICE_STUB.FetchPolice(req, timeout=TIMEOUT_SECONDS) 
         response_json = json_format.MessageToJson(response)
         return json.loads(response_json)
- 
 
     except grpc.RpcError as e:
         if "rate limit exceeded" in str(e.details()):
@@ -69,7 +70,7 @@ async def fetch_police(params: UserGeoInfo):
     req = accident_pb2.FetchAccidentRequest(user_info=user_info)
 
     try:
-        response = ACCIDENT_SERVICE_STUB.FetchAccidents(req) 
+        response = ACCIDENT_SERVICE_STUB.FetchAccidents(req, timeout=TIMEOUT_SECONDS) 
         response_json = json_format.MessageToJson(response)
         return json.loads(response_json)
  
@@ -99,8 +100,7 @@ def post_police(params: PolicePostParams):
     req = police_pb2.PostPoliceRequest(police_info=police_info)
 
     try:
-        response = POLICE_SERVICE_STUB.PostPolice(req)
-        print(response)
+        response = POLICE_SERVICE_STUB.PostPolice(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)  
         return json.loads(response_json)
 
@@ -130,7 +130,7 @@ async def post_accident(params: PostAccidentEntry):
     req = accident_pb2.PostAccidentRequest(accident_info=accident_info)
 
     try:
-        response = ACCIDENT_SERVICE_STUB.PostAccident(req)
+        response = ACCIDENT_SERVICE_STUB.PostAccident(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)
         return json.loads(response_json)
 
@@ -159,7 +159,7 @@ def confirm_police(params: PoliceConfirmParams ):
     req = police_pb2.ConfirmPoliceRequest(police_info=confirm_info)
 
     try:
-        response = POLICE_SERVICE_STUB.ConfirmPolice(req)
+        response = POLICE_SERVICE_STUB.ConfirmPolice(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)  
         return json.loads(response_json)
 
@@ -191,7 +191,7 @@ async def confirm_accident(entry: ConfirmAccidentEntry):
     req = accident_pb2.ConfirmAccidentRequest(info=confirm_info)
 
     try:
-        response = ACCIDENT_SERVICE_STUB.ConfirmAccident(req)
+        response = ACCIDENT_SERVICE_STUB.ConfirmAccident(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)
         return json.loads(response_json)
 
