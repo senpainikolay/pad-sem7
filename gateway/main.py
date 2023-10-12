@@ -200,3 +200,8 @@ async def confirm_accident(entry: ConfirmAccidentEntry):
             raise HTTPException(status_code=429, detail="Rate limit exceeded")
         else:
             raise HTTPException(status_code=500, detail=str(e.details())) 
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8080)

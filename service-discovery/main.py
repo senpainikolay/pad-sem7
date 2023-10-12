@@ -14,7 +14,8 @@ class ServiceInfo(BaseModel):
 def register_service(params: ServiceInfo):
     if params.service_type not in services:
         services[params.service_type] = list()
-    services[params.service_type].append(params.service_url)
+    if params.service_url not in services[params.service_type]:
+        services[params.service_type].append(params.service_url)
     return {"message": f"Service replica of '{params.service_type}' registered at '{params.service_url}'"}
 
 @app.delete("/services/unregister")
