@@ -1,0 +1,11 @@
+// protoc --go_out=internal/pb --go_opt=paths=source_relative --go-grpc_out=internal/pb --go-grpc_opt=paths=source_relative internal/proto/police.proto
+syntax = "proto3";
+package proto;
+
+message HealthResponse { 
+    bool ready =1; 
+    string database = 2;  
+    bool load =3; 
+}  
+
+message HealthRequest {}

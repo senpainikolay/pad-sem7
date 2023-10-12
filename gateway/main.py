@@ -1,5 +1,5 @@
 import grpc
-from  proto import police_pb2_grpc, police_pb2, accident_pb2, accident_pb2_grpc
+from  proto import police_pb2_grpc, police_pb2, accident_pb2, accident_pb2_grpc, health_pb2
 from google.protobuf import json_format   
 import json
 from fastapi import FastAPI, HTTPException  
@@ -21,6 +21,38 @@ ACCIDENT_SERVICE_STUB = accident_pb2_grpc.AccidentReportingServiceStub(accident_
 app = FastAPI() 
 
 
+@app.get('/status')
+async def gateway_status():
+    overall_status = {}
+    try:
+        #
+        # police
+        #  
+        req = health_pb2.HealthRequest()
+        try:
+            response = POLICE_SERVICE_STUB.HealthCheck(req,timeout=5) 
+            print(response)
+            response_json = json_format.MessageToJson(response)
+            overall_status["police_service"] = json.loads(response_json)
+        except grpc.RpcError as e:
+                overall_status["police_service"] = e.details()
+        
+        # 
+        # accident
+        #  
+
+        req = health_pb2.HealthRequest()
+        try:
+            response = ACCIDENT_SERVICE_STUB.HealthCheck(req, timeout=5) 
+            response_json = json_format.MessageToJson(response)
+            overall_status["accident_service"] = json.loads(response_json)
+        except grpc.RpcError as e:
+                overall_status["accident_service"] = e.details()
+        
+        return json.loads(json.dumps(overall_status))
+
+    except Exception as e:
+            return HTTPException(status_code=500, detail=str(e))
 
 
 class UserGeoInfo(BaseModel):
@@ -42,7 +74,7 @@ async def fetch_police(params: UserGeoInfo):
     try:
         response = POLICE_SERVICE_STUB.FetchPolice(req, timeout=TIMEOUT_SECONDS) 
         response_json = json_format.MessageToJson(response)
-        return json.loads(response_json)
+        return  json.loads(response_json)
 
     except grpc.RpcError as e:
         if "rate limit exceeded" in str(e.details()):
@@ -72,7 +104,7 @@ async def fetch_police(params: UserGeoInfo):
     try:
         response = ACCIDENT_SERVICE_STUB.FetchAccidents(req, timeout=TIMEOUT_SECONDS) 
         response_json = json_format.MessageToJson(response)
-        return json.loads(response_json)
+        return  json.loads(response_json)
  
 
     except grpc.RpcError as e:
@@ -102,7 +134,7 @@ def post_police(params: PolicePostParams):
     try:
         response = POLICE_SERVICE_STUB.PostPolice(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)  
-        return json.loads(response_json)
+        return  json.loads(response_json)
 
     except grpc.RpcError as e:
         if "rate limit exceeded" in str(e.details()):
@@ -132,7 +164,7 @@ async def post_accident(params: PostAccidentEntry):
     try:
         response = ACCIDENT_SERVICE_STUB.PostAccident(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)
-        return json.loads(response_json)
+        return  json.loads(response_json)
 
     except grpc.RpcError as e:
         if "rate limit exceeded" in str(e.details()):
@@ -161,7 +193,7 @@ def confirm_police(params: PoliceConfirmParams ):
     try:
         response = POLICE_SERVICE_STUB.ConfirmPolice(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)  
-        return json.loads(response_json)
+        return  json.loads(response_json)
 
     except grpc.RpcError as e:
         if "rate limit exceeded" in str(e.details()):
@@ -193,7 +225,7 @@ async def confirm_accident(entry: ConfirmAccidentEntry):
     try:
         response = ACCIDENT_SERVICE_STUB.ConfirmAccident(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)
-        return json.loads(response_json)
+        return  json.loads(response_json)
 
     except grpc.RpcError as e:
         if "rate limit exceeded" in str(e.details()):

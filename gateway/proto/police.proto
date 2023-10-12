@@ -1,8 +1,6 @@
-// protoc --go_out=internal/pb --go_opt=paths=source_relative --go-grpc_out=internal/pb --go-grpc_opt=paths=source_relative internal/proto/police.proto
 syntax = "proto3";
 package proto;
-
-option go_package = "github.com/senpainikolay/pad-sem7/proto"; 
+import "proto/health.proto";
 
 
 message GetPoliceUserEntry {
@@ -56,6 +54,7 @@ service PoliceReportingService {
     rpc FetchPolice(FetchPoliceRequest) returns (GetPoliceResponse) {}
     rpc PostPolice(PostPoliceRequest) returns (PoliceResponse) {}
     rpc ConfirmPolice(ConfirmPoliceRequest) returns (PoliceResponse) {} 
+    rpc HealthCheck(HealthRequest) returns (HealthResponse) {}
   }
    
 
