@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from proto import accident_pb2 as proto_dot_accident__pb2
+from proto import accident_pb2
 
 
 class AccidentReportingServiceStub(object):
@@ -16,23 +16,18 @@ class AccidentReportingServiceStub(object):
         """
         self.FetchAccidents = channel.unary_unary(
                 '/proto.AccidentReportingService/FetchAccidents',
-                request_serializer=proto_dot_accident__pb2.FetchAccidentRequest.SerializeToString,
-                response_deserializer=proto_dot_accident__pb2.GetAccidentResponse.FromString,
+                request_serializer=accident_pb2.FetchAccidentRequest.SerializeToString,
+                response_deserializer=accident_pb2.GetAccidentResponse.FromString,
                 )
         self.PostAccident = channel.unary_unary(
                 '/proto.AccidentReportingService/PostAccident',
-                request_serializer=proto_dot_accident__pb2.PostAccidentRequest.SerializeToString,
-                response_deserializer=proto_dot_accident__pb2.GenericResponse.FromString,
+                request_serializer=accident_pb2.PostAccidentRequest.SerializeToString,
+                response_deserializer=accident_pb2.GenericResponse.FromString,
                 )
         self.ConfirmAccident = channel.unary_unary(
                 '/proto.AccidentReportingService/ConfirmAccident',
-                request_serializer=proto_dot_accident__pb2.ConfirmAccidentRequest.SerializeToString,
-                response_deserializer=proto_dot_accident__pb2.GenericResponse.FromString,
-                )
-        self.HealthCheck = channel.unary_unary(
-                '/proto.AccidentReportingService/HealthCheck',
-                request_serializer=proto_dot_accident__pb2.HealthRequest.SerializeToString,
-                response_deserializer=proto_dot_accident__pb2.HealthResponse.FromString,
+                request_serializer=accident_pb2.ConfirmAccidentRequest.SerializeToString,
+                response_deserializer=accident_pb2.GenericResponse.FromString,
                 )
 
 
@@ -57,34 +52,23 @@ class AccidentReportingServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def HealthCheck(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
 
 def add_AccidentReportingServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'FetchAccidents': grpc.unary_unary_rpc_method_handler(
                     servicer.FetchAccidents,
-                    request_deserializer=proto_dot_accident__pb2.FetchAccidentRequest.FromString,
-                    response_serializer=proto_dot_accident__pb2.GetAccidentResponse.SerializeToString,
+                    request_deserializer=accident_pb2.FetchAccidentRequest.FromString,
+                    response_serializer=accident_pb2.GetAccidentResponse.SerializeToString,
             ),
             'PostAccident': grpc.unary_unary_rpc_method_handler(
                     servicer.PostAccident,
-                    request_deserializer=proto_dot_accident__pb2.PostAccidentRequest.FromString,
-                    response_serializer=proto_dot_accident__pb2.GenericResponse.SerializeToString,
+                    request_deserializer=accident_pb2.PostAccidentRequest.FromString,
+                    response_serializer=accident_pb2.GenericResponse.SerializeToString,
             ),
             'ConfirmAccident': grpc.unary_unary_rpc_method_handler(
                     servicer.ConfirmAccident,
-                    request_deserializer=proto_dot_accident__pb2.ConfirmAccidentRequest.FromString,
-                    response_serializer=proto_dot_accident__pb2.GenericResponse.SerializeToString,
-            ),
-            'HealthCheck': grpc.unary_unary_rpc_method_handler(
-                    servicer.HealthCheck,
-                    request_deserializer=proto_dot_accident__pb2.HealthRequest.FromString,
-                    response_serializer=proto_dot_accident__pb2.HealthResponse.SerializeToString,
+                    request_deserializer=accident_pb2.ConfirmAccidentRequest.FromString,
+                    response_serializer=accident_pb2.GenericResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -108,8 +92,8 @@ class AccidentReportingService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/proto.AccidentReportingService/FetchAccidents',
-            proto_dot_accident__pb2.FetchAccidentRequest.SerializeToString,
-            proto_dot_accident__pb2.GetAccidentResponse.FromString,
+            accident_pb2.FetchAccidentRequest.SerializeToString,
+            accident_pb2.GetAccidentResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -125,8 +109,8 @@ class AccidentReportingService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/proto.AccidentReportingService/PostAccident',
-            proto_dot_accident__pb2.PostAccidentRequest.SerializeToString,
-            proto_dot_accident__pb2.GenericResponse.FromString,
+            accident_pb2.PostAccidentRequest.SerializeToString,
+            accident_pb2.GenericResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -142,24 +126,7 @@ class AccidentReportingService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/proto.AccidentReportingService/ConfirmAccident',
-            proto_dot_accident__pb2.ConfirmAccidentRequest.SerializeToString,
-            proto_dot_accident__pb2.GenericResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def HealthCheck(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/proto.AccidentReportingService/HealthCheck',
-            proto_dot_accident__pb2.HealthRequest.SerializeToString,
-            proto_dot_accident__pb2.HealthResponse.FromString,
+            accident_pb2.ConfirmAccidentRequest.SerializeToString,
+            accident_pb2.GenericResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
