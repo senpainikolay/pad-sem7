@@ -24,18 +24,20 @@ app = FastAPI()
 @app.get('/status')
 async def gateway_status():
     overall_status = {}
+    overall_status["ready"] = True
     try:
         #
         # police
         #  
         req = health_pb2.HealthRequest()
         try:
-            response = POLICE_SERVICE_STUB.HealthCheck(req,timeout=5) 
+            response = POLICE_SERVICE_STUB.HealthCheck(req) 
             print(response)
             response_json = json_format.MessageToJson(response)
             overall_status["police_service"] = json.loads(response_json)
         except grpc.RpcError as e:
-                overall_status["police_service"] = e.details()
+                overall_status["police_service"] =  json.loads(json.dumps( {"msg" : e.details(), "error" : True}))
+                overall_status["ready"] = False
         
         # 
         # accident
@@ -43,11 +45,12 @@ async def gateway_status():
 
         req = health_pb2.HealthRequest()
         try:
-            response = ACCIDENT_SERVICE_STUB.HealthCheck(req, timeout=5) 
+            response = ACCIDENT_SERVICE_STUB.HealthCheck(req) 
             response_json = json_format.MessageToJson(response)
             overall_status["accident_service"] = json.loads(response_json)
         except grpc.RpcError as e:
-                overall_status["accident_service"] = e.details()
+                overall_status["accident_service"] = json.loads(json.dumps( {"msg" : e.details(), "error" : True}))
+                overall_status["ready"] = False
         
         return json.loads(json.dumps(overall_status))
 

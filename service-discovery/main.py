@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException 
 from pydantic import BaseModel
+import json
 
 
 app = FastAPI()
@@ -9,6 +10,21 @@ services = {}
 class ServiceInfo(BaseModel):
     service_type: str
     service_url: str
+
+
+@app.get('/status')
+async def gateway_status():
+    overall_status = {}
+    overall_status["status"] = True
+    overall_status["police_service"] = "registered" 
+    overall_status["accident_service"] = "registered" 
+
+    if "police-reporting"  not in services:
+        overall_status["police_service"] = "unregistered" 
+    if "accident-reporting"  not in services:
+        overall_status["accident_service"] = "unregistered"
+
+    return json.loads(json.dumps(overall_status))
 
 @app.post("/services/register")
 def register_service(params: ServiceInfo):
