@@ -5,24 +5,22 @@ import json
 from fastapi import FastAPI, HTTPException  
 from pydantic import BaseModel
 
+from load_balancer import LoadBalancer
+
 
 city_harcoded = "chisinau"
-street_hardcoded = "vm 99"
+street_hardcoded = "vm 99" 
+
+Police_LB = LoadBalancer('localhost:8000', "police-reporting") 
+Accident_LB = LoadBalancer('localhost:8000', "accident-reporting") 
 
 TIMEOUT_SECONDS = 5
-
-police_channel = grpc.insecure_channel('localhost:6666')
-POLICE_SERVICE_STUB = police_pb2_grpc.PoliceReportingServiceStub(police_channel) 
-
-accident_channel = grpc.insecure_channel('localhost:6667')
-ACCIDENT_SERVICE_STUB = accident_pb2_grpc.AccidentReportingServiceStub(accident_channel)
-
 
 app = FastAPI() 
 
 
 @app.get('/status')
-async def gateway_status():
+def gateway_status():
     overall_status = {}
     overall_status["ready"] = True
     try:
@@ -31,12 +29,18 @@ async def gateway_status():
         #  
         req = health_pb2.HealthRequest()
         try:
-            response = POLICE_SERVICE_STUB.HealthCheck(req) 
-            print(response)
-            response_json = json_format.MessageToJson(response)
-            overall_status["police_service"] = json.loads(response_json)
+            cl = Police_LB.get_next_stub() 
+            if cl == None:
+                overall_status["police_service"] = "something wrong"
+                overall_status["ready"] = False
+                Police_LB.call_service_discovery()
+            else:
+                response = cl.HealthCheck(req) 
+                response_json = json_format.MessageToJson(response)
+                overall_status["police_service"] = json.loads(response_json)
         except grpc.RpcError as e:
-                overall_status["police_service"] =  json.loads(json.dumps( {"msg" : e.details(), "error" : True}))
+                Police_LB.call_service_discovery()
+                overall_status["police_service"] =  str(e.code())
                 overall_status["ready"] = False
         
         # 
@@ -45,11 +49,18 @@ async def gateway_status():
 
         req = health_pb2.HealthRequest()
         try:
-            response = ACCIDENT_SERVICE_STUB.HealthCheck(req) 
-            response_json = json_format.MessageToJson(response)
-            overall_status["accident_service"] = json.loads(response_json)
+            cl = Accident_LB.get_next_stub() 
+            if cl == None:
+                overall_status["accident_service"] = "something wrong"
+                overall_status["ready"] = False
+                Accident_LB.call_service_discovery()
+            else:
+                response = cl.HealthCheck(req) 
+                response_json = json_format.MessageToJson(response)
+                overall_status["accident_service"] = json.loads(response_json)
         except grpc.RpcError as e:
-                overall_status["accident_service"] = json.loads(json.dumps( {"msg" : e.details(), "error" : True}))
+                Accident_LB.call_service_discovery()
+                overall_status["accident_service"] = str(e.code())
                 overall_status["ready"] = False
         
         return json.loads(json.dumps(overall_status))
@@ -75,15 +86,23 @@ async def fetch_police(params: UserGeoInfo):
     req = police_pb2.FetchPoliceRequest(user_info=user_info)
 
     try:
-        response = POLICE_SERVICE_STUB.FetchPolice(req, timeout=TIMEOUT_SECONDS) 
+        cl = Police_LB.get_next_stub() 
+        if cl == None:
+            Police_LB.call_service_discovery()
+            raise HTTPException(status_code=503, detail="no service clients found")
+        response = cl.FetchPolice(req, timeout=TIMEOUT_SECONDS) 
         response_json = json_format.MessageToJson(response)
         return  json.loads(response_json)
 
     except grpc.RpcError as e:
-        if "rate limit exceeded" in str(e.details()):
-            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+        if  grpc.StatusCode.RESOURCE_EXHAUSTED == e.code():
+            raise HTTPException(status_code=429, detail=str(e.details()))
+        elif grpc.StatusCode.UNAVAILABLE == e.code():
+            Police_LB.unregister_url()
+            Police_LB.call_service_discovery()
+            raise HTTPException(status_code=202, detail="try again")
         else:
-            raise HTTPException(status_code=500, detail=str(e.details()))
+            Police_LB.record_to_circuit_breaker()
 
 
 
@@ -94,7 +113,7 @@ class UserGeoInfo(BaseModel):
 
 
 @app.get('/fetchAccidents')
-async def fetch_police(params: UserGeoInfo):
+async def fetch_accs(params: UserGeoInfo):
     user_info = accident_pb2.GetAccidentUserEntry(
         user_long=params.user_long,
         user_lat=params.user_lat,
@@ -105,16 +124,24 @@ async def fetch_police(params: UserGeoInfo):
     req = accident_pb2.FetchAccidentRequest(user_info=user_info)
 
     try:
-        response = ACCIDENT_SERVICE_STUB.FetchAccidents(req, timeout=TIMEOUT_SECONDS) 
+        cl = Accident_LB.get_next_stub() 
+        if cl == None:
+            Accident_LB.call_service_discovery()
+            raise HTTPException(status_code=503, detail="no service clients found")
+        response = cl.FetchAccidents(req, timeout=TIMEOUT_SECONDS) 
         response_json = json_format.MessageToJson(response)
         return  json.loads(response_json)
  
 
     except grpc.RpcError as e:
-        if "rate limit exceeded" in str(e.details()):
-            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+        if  grpc.StatusCode.RESOURCE_EXHAUSTED == e.code():
+            raise HTTPException(status_code=429, detail=str(e.details()))
+        elif grpc.StatusCode.UNAVAILABLE == e.code():
+            Accident_LB.unregister_url()
+            Accident_LB.call_service_discovery()
+            raise HTTPException(status_code=202, detail="try again")
         else:
-            raise HTTPException(status_code=500, detail=str(e.details()))
+            Accident_LB.record_to_circuit_breaker()
 
 
 
@@ -135,15 +162,24 @@ def post_police(params: PolicePostParams):
     req = police_pb2.PostPoliceRequest(police_info=police_info)
 
     try:
-        response = POLICE_SERVICE_STUB.PostPolice(req, timeout=TIMEOUT_SECONDS)
+        cl = Police_LB.get_next_stub() 
+        if cl == None:
+            Police_LB.call_service_discovery()
+            raise HTTPException(status_code=503, detail="no service clients found")
+        
+        response = cl.PostPolice(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)  
         return  json.loads(response_json)
 
     except grpc.RpcError as e:
-        if "rate limit exceeded" in str(e.details()):
-            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+        if  grpc.StatusCode.RESOURCE_EXHAUSTED == e.code():
+            raise HTTPException(status_code=429, detail=str(e.details()))
+        elif grpc.StatusCode.UNAVAILABLE == e.code():
+            Police_LB.unregister_url()
+            Police_LB.call_service_discovery()
+            raise HTTPException(status_code=202, detail="try again") 
         else:
-            raise HTTPException(status_code=500, detail=str(e.details()))
+            Police_LB.record_to_circuit_breaker()
 
 
 
@@ -165,15 +201,23 @@ async def post_accident(params: PostAccidentEntry):
     req = accident_pb2.PostAccidentRequest(accident_info=accident_info)
 
     try:
-        response = ACCIDENT_SERVICE_STUB.PostAccident(req, timeout=TIMEOUT_SECONDS)
+        cl = Accident_LB.get_next_stub() 
+        if cl == None:
+            Accident_LB.call_service_discovery()
+            raise HTTPException(status_code=503, detail="no service clients found")
+        response = cl.PostAccident(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)
         return  json.loads(response_json)
 
     except grpc.RpcError as e:
-        if "rate limit exceeded" in str(e.details()):
-            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+        if  grpc.StatusCode.RESOURCE_EXHAUSTED == e.code():
+            raise HTTPException(status_code=429, detail=str(e.details()))
+        elif grpc.StatusCode.UNAVAILABLE == e.code():
+            Accident_LB.unregister_url()
+            Accident_LB.call_service_discovery()
+            raise HTTPException(status_code=202, detail="try again")
         else:
-            raise HTTPException(status_code=500, detail=str(e.details()))
+            Accident_LB.record_to_circuit_breaker()
 
 
 
@@ -194,15 +238,23 @@ def confirm_police(params: PoliceConfirmParams ):
     req = police_pb2.ConfirmPoliceRequest(police_info=confirm_info)
 
     try:
-        response = POLICE_SERVICE_STUB.ConfirmPolice(req, timeout=TIMEOUT_SECONDS)
+        cl = Police_LB.get_next_stub() 
+        if cl == None:
+            Police_LB.call_service_discovery()
+            raise HTTPException(status_code=503, detail="no service clients found")
+        response = cl.ConfirmPolice(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)  
         return  json.loads(response_json)
 
     except grpc.RpcError as e:
-        if "rate limit exceeded" in str(e.details()):
-            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+        if  grpc.StatusCode.RESOURCE_EXHAUSTED == e.code():
+            raise HTTPException(status_code=429, detail=str(e.details()))
+        elif grpc.StatusCode.UNAVAILABLE == e.code():
+            Police_LB.unregister_url()
+            Police_LB.call_service_discovery()
+            raise HTTPException(status_code=202, detail="try again")
         else:
-            raise HTTPException(status_code=500, detail=str(e.details())) 
+            Police_LB.record_to_circuit_breaker()
         
 
 
@@ -226,15 +278,23 @@ async def confirm_accident(entry: ConfirmAccidentEntry):
     req = accident_pb2.ConfirmAccidentRequest(info=confirm_info)
 
     try:
-        response = ACCIDENT_SERVICE_STUB.ConfirmAccident(req, timeout=TIMEOUT_SECONDS)
+        cl = Accident_LB.get_next_stub() 
+        if cl == None:
+            Accident_LB.call_service_discovery()
+            raise HTTPException(status_code=503, detail="no service clients found")
+        response = cl.ConfirmAccident(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)
         return  json.loads(response_json)
 
     except grpc.RpcError as e:
-        if "rate limit exceeded" in str(e.details()):
-            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+        if  grpc.StatusCode.RESOURCE_EXHAUSTED == e.code():
+            raise HTTPException(status_code=429, detail=str(e.details()))
+        elif grpc.StatusCode.UNAVAILABLE == e.code():
+            Accident_LB.unregister_url()
+            Accident_LB.call_service_discovery()
+            raise HTTPException(status_code=202, detail="try again") 
         else:
-            raise HTTPException(status_code=500, detail=str(e.details())) 
+            Accident_LB.record_to_circuit_breaker()
 
 
 if __name__ == "__main__":
