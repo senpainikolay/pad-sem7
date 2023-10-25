@@ -110,6 +110,8 @@ async def fetch_police(params: UserGeoInfo):
             Police_LB.call_service_discovery()
             raise HTTPException(status_code=202, detail="try again")
         else:
+            Police_LB.unregister_url()
+            Police_LB.call_service_discovery()
             Police_LB.record_to_circuit_breaker()
 
 
@@ -154,6 +156,8 @@ async def fetch_accs(params: UserGeoInfo):
             Accident_LB.call_service_discovery()
             raise HTTPException(status_code=202, detail="try again")
         else:
+            Accident_LB.unregister_url()
+            Accident_LB.call_service_discovery()
             Accident_LB.record_to_circuit_breaker()
 
 
@@ -193,6 +197,8 @@ def post_police(params: PolicePostParams):
             Police_LB.call_service_discovery()
             raise HTTPException(status_code=202, detail="try again") 
         else:
+            Police_LB.unregister_url()
+            Police_LB.call_service_discovery()
             Police_LB.record_to_circuit_breaker()
 
 
@@ -232,6 +238,8 @@ async def post_accident(params: PostAccidentEntry):
             Accident_LB.call_service_discovery()
             raise HTTPException(status_code=202, detail="try again")
         else:
+            Accident_LB.unregister_url()
+            Accident_LB.call_service_discovery()
             Accident_LB.record_to_circuit_breaker()
 
 
@@ -270,6 +278,8 @@ def confirm_police(params: PoliceConfirmParams ):
             Police_LB.call_service_discovery()
             raise HTTPException(status_code=202, detail="try again")
         else:
+            Police_LB.unregister_url()
+            Police_LB.call_service_discovery()
             Police_LB.record_to_circuit_breaker()
         
 
@@ -311,6 +321,8 @@ async def confirm_accident(entry: ConfirmAccidentEntry):
             Accident_LB.call_service_discovery()
             raise HTTPException(status_code=202, detail="try again") 
         else:
+            Accident_LB.unregister_url()
+            Accident_LB.call_service_discovery()
             Accident_LB.record_to_circuit_breaker()
 
 

@@ -3,17 +3,13 @@ services:
 
   service_discovery:
       container_name: service_discovery_pad
-      build:
-        context: ./service-discovery
-        dockerfile: Dockerfile
+      image: nicug/service_discovery:latest
       ports:
         - 8000:8000
 
   gateway:
       container_name: gateway_pad
-      build:
-        context: ./gateway
-        dockerfile: Dockerfile
+      image: nicug/gateway:latest
       ports:
         - 8080:8080
       environment:
@@ -31,14 +27,11 @@ services:
   
   pol1:
     container_name: police_repo1
-    build:
-      context: ./police-reporting-service
-      dockerfile: Dockerfile 
-      args:
-          port: 6666
+    image: nicug/police_reporting_service:latest
     ports:
       - "6666:6666" 
     environment:
+     - PORT=6666
      - DB_NAME=test_db
      - SERVICE_PORT=6666
      - MONGODB_HOST=mongo_pad
@@ -52,14 +45,11 @@ services:
 
   pol2:
     container_name: police_repo2
-    build:
-      context: ./police-reporting-service
-      dockerfile: Dockerfile 
-      args:
-          port: 6667
+    image: nicug/police_reporting_service:latest
     ports:
       - "6667:6667" 
     environment:
+     - PORT=6667
      - DB_NAME=test_db
      - SERVICE_PORT=6667
      - MONGODB_HOST=mongo_pad
@@ -73,14 +63,11 @@ services:
   
   pol3:
     container_name: police_repo3
-    build:
-      context: ./police-reporting-service
-      dockerfile: Dockerfile 
-      args:
-          port: 6668
+    image: nicug/police_reporting_service:latest
     ports:
       - "6668:6668" 
     environment:
+     - PORT=6668
      - DB_NAME=test_db
      - SERVICE_PORT=6668
      - MONGODB_HOST=mongo_pad
@@ -94,16 +81,53 @@ services:
 
   acc1:
     container_name: acc_repo1
-    build:
-      context: ./accident-reporting-service
-      dockerfile: Dockerfile 
-      args:
-          port: 6676
+    image: nicug/accident_reporting_service:latest
     ports:
       - "6676:6676" 
     environment:
+    - PORT=6676
     - SERVICE_PORT=6676
     - LOCALNAME=acc_repo1
+    - SERVICE_DISCOVERY_PORT=8000
+    - SERVICE_DISCOVERY_HOST=service_discovery_pad
+    - POSTGRES_HOST=postgres_pad
+    - USER_DB=user
+    - POSTGRES_PW=password
+    - POSTGRES_DB_NAME=test_db
+    - POSTGRES_PORT=5432
+    depends_on:
+      - postgres
+      - service_discovery  
+
+  acc2:
+    container_name: acc_repo2
+    image: nicug/accident_reporting_service:latest
+    ports:
+      - "6677:6677" 
+    environment:
+    - PORT=6677
+    - SERVICE_PORT=6677
+    - LOCALNAME=acc_repo2
+    - SERVICE_DISCOVERY_PORT=8000
+    - SERVICE_DISCOVERY_HOST=service_discovery_pad
+    - POSTGRES_HOST=postgres_pad
+    - USER_DB=user
+    - POSTGRES_PW=password
+    - POSTGRES_DB_NAME=test_db
+    - POSTGRES_PORT=5432
+    depends_on:
+      - postgres
+      - service_discovery  
+
+  acc3:
+    container_name: acc_repo3
+    image: nicug/accident_reporting_service:latest
+    ports:
+      - "6678:6678" 
+    environment:
+    - PORT=6678
+    - SERVICE_PORT=6678
+    - LOCALNAME=acc_repo3
     - SERVICE_DISCOVERY_PORT=8000
     - SERVICE_DISCOVERY_HOST=service_discovery_pad
     - POSTGRES_HOST=postgres_pad
