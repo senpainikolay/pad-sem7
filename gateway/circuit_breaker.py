@@ -1,7 +1,5 @@
 import time
 
-import time
-
 class CircuitBreaker:
     def __init__(self, max_failures=3, reset_timeout=60):
         self.max_failures = max_failures

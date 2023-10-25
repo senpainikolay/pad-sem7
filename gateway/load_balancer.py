@@ -1,10 +1,11 @@
 
 import requests 
 import json 
-from main import TIMEOUT_SECONDS
 from circuit_breaker import CircuitBreaker
 from  proto import police_pb2_grpc, police_pb2, accident_pb2, accident_pb2_grpc, health_pb2 
 import grpc
+
+TIMEOUT_SECONDS =5 
 
 class LoadBalancer:
     def __init__(self, service_discovery_server,service_type):

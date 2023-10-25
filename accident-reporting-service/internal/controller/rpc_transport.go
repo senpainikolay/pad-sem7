@@ -6,6 +6,7 @@ import (
 	"net"
 	"senpainikolay/pad-sem7/accident-reporting-service/internal/models"
 	pb "senpainikolay/pad-sem7/accident-reporting-service/internal/pb"
+	"time"
 
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
@@ -25,7 +26,7 @@ type AccidentReportingServer struct {
 	accReportingSvc IAccidentReportingService
 }
 
-var LIMITER = rate.NewLimiter(1, 1)
+var LIMITER = rate.NewLimiter(rate.Every(time.Second), 1)
 
 func Serve(acc_service IAccidentReportingService, bind string) {
 	listener, err := net.Listen("tcp", bind)

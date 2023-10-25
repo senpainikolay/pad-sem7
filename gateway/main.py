@@ -4,15 +4,16 @@ from google.protobuf import json_format
 import json
 from fastapi import FastAPI, HTTPException  
 from pydantic import BaseModel
-
-from load_balancer import LoadBalancer
+from load_balancer import LoadBalancer 
+from redis_client import RedisClient
 
 
 city_harcoded = "chisinau"
 street_hardcoded = "vm 99" 
 
 Police_LB = LoadBalancer('localhost:8000', "police-reporting") 
-Accident_LB = LoadBalancer('localhost:8000', "accident-reporting") 
+Accident_LB = LoadBalancer('localhost:8000', "accident-reporting")
+Redis_Client = RedisClient()
 
 TIMEOUT_SECONDS = 5
 
@@ -76,6 +77,10 @@ class UserGeoInfo(BaseModel):
 
 @app.get('/fetchPolice')
 async def fetch_police(params: UserGeoInfo):
+    res = Redis_Client.get_pol_values(city_harcoded,params.user_long, params.user_lat)
+    if len(res) != 0:
+        return json.loads( json.dumps(res))
+
     user_info = police_pb2.GetPoliceUserEntry(
         user_long=params.user_long,
         user_lat=params.user_lat,
@@ -92,6 +97,7 @@ async def fetch_police(params: UserGeoInfo):
             raise HTTPException(status_code=503, detail="no service clients found")
         response = cl.FetchPolice(req, timeout=TIMEOUT_SECONDS) 
         response_json = json_format.MessageToJson(response)
+        Redis_Client.add_pol_coords(city_harcoded, json.loads(response_json))
         return  json.loads(response_json)
 
     except grpc.RpcError as e:
@@ -169,6 +175,7 @@ def post_police(params: PolicePostParams):
         
         response = cl.PostPolice(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)  
+        Redis_Client.delete_pol_city_info(city_harcoded)
         return  json.loads(response_json)
 
     except grpc.RpcError as e:
@@ -243,7 +250,8 @@ def confirm_police(params: PoliceConfirmParams ):
             Police_LB.call_service_discovery()
             raise HTTPException(status_code=503, detail="no service clients found")
         response = cl.ConfirmPolice(req, timeout=TIMEOUT_SECONDS)
-        response_json = json_format.MessageToJson(response)  
+        response_json = json_format.MessageToJson(response) 
+        Redis_Client.delete_pol_city_info(city_harcoded)
         return  json.loads(response_json)
 
     except grpc.RpcError as e:

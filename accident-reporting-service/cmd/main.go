@@ -30,9 +30,6 @@ func main() {
 
 	serviceDiscoveryReq("register", "localhost:6667", "POST")
 
-	// in case of error
-	defer serviceDiscoveryReq("unregister", "localhost:6667", "DELETE")
-
 	// in case of force stop
 	go signalUnregisterThread()
 
