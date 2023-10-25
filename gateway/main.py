@@ -120,6 +120,10 @@ class UserGeoInfo(BaseModel):
 
 @app.get('/fetchAccidents')
 async def fetch_accs(params: UserGeoInfo):
+    res = Redis_Client.get_acc_values(city_harcoded,params.user_long, params.user_lat)
+    if len(res) != 0:
+        return json.loads( json.dumps(res))
+    
     user_info = accident_pb2.GetAccidentUserEntry(
         user_long=params.user_long,
         user_lat=params.user_lat,
@@ -136,6 +140,7 @@ async def fetch_accs(params: UserGeoInfo):
             raise HTTPException(status_code=503, detail="no service clients found")
         response = cl.FetchAccidents(req, timeout=TIMEOUT_SECONDS) 
         response_json = json_format.MessageToJson(response)
+        Redis_Client.add_acc_coords(city_harcoded, json.loads(response_json))
         return  json.loads(response_json)
  
 
@@ -214,6 +219,7 @@ async def post_accident(params: PostAccidentEntry):
             raise HTTPException(status_code=503, detail="no service clients found")
         response = cl.PostAccident(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)
+        Redis_Client.delete_acc_city_info(city_harcoded)
         return  json.loads(response_json)
 
     except grpc.RpcError as e:
@@ -292,6 +298,7 @@ async def confirm_accident(entry: ConfirmAccidentEntry):
             raise HTTPException(status_code=503, detail="no service clients found")
         response = cl.ConfirmAccident(req, timeout=TIMEOUT_SECONDS)
         response_json = json_format.MessageToJson(response)
+        Redis_Client.delete_acc_city_info(city_harcoded)
         return  json.loads(response_json)
 
     except grpc.RpcError as e:
