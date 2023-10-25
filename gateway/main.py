@@ -15,7 +15,7 @@ Police_LB = LoadBalancer(os.getenv("SERVICE_DISCOVERY_HOST") + ":"  + os.getenv(
 Accident_LB = LoadBalancer(os.getenv("SERVICE_DISCOVERY_HOST") + ":"  + os.getenv("SERVICE_DISCOVERY_PORT") , "accident-reporting")
 Redis_Client = RedisClient(host = os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT"))
 
-TIMEOUT_SECONDS = 5
+TIMEOUT_SECONDS = 3
 
 app = FastAPI() 
 
@@ -109,10 +109,11 @@ async def fetch_police(params: UserGeoInfo):
             Police_LB.unregister_url()
             Police_LB.call_service_discovery()
             raise HTTPException(status_code=202, detail="try again")
+        elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
+            Police_LB.record_to_circuit_breaker()
         else:
             Police_LB.unregister_url()
             Police_LB.call_service_discovery()
-            Police_LB.record_to_circuit_breaker()
 
 
 
@@ -155,10 +156,11 @@ async def fetch_accs(params: UserGeoInfo):
             Accident_LB.unregister_url()
             Accident_LB.call_service_discovery()
             raise HTTPException(status_code=202, detail="try again")
+        elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
+            Accident_LB.record_to_circuit_breaker()
         else:
             Accident_LB.unregister_url()
             Accident_LB.call_service_discovery()
-            Accident_LB.record_to_circuit_breaker()
 
 
 
@@ -196,10 +198,12 @@ def post_police(params: PolicePostParams):
             Police_LB.unregister_url()
             Police_LB.call_service_discovery()
             raise HTTPException(status_code=202, detail="try again") 
+        
+        elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
+            Police_LB.record_to_circuit_breaker()
         else:
             Police_LB.unregister_url()
             Police_LB.call_service_discovery()
-            Police_LB.record_to_circuit_breaker()
 
 
 
@@ -237,10 +241,11 @@ async def post_accident(params: PostAccidentEntry):
             Accident_LB.unregister_url()
             Accident_LB.call_service_discovery()
             raise HTTPException(status_code=202, detail="try again")
+        elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
+            Accident_LB.record_to_circuit_breaker()
         else:
             Accident_LB.unregister_url()
             Accident_LB.call_service_discovery()
-            Accident_LB.record_to_circuit_breaker()
 
 
 
@@ -277,10 +282,11 @@ def confirm_police(params: PoliceConfirmParams ):
             Police_LB.unregister_url()
             Police_LB.call_service_discovery()
             raise HTTPException(status_code=202, detail="try again")
+        elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
+            Police_LB.record_to_circuit_breaker()
         else:
             Police_LB.unregister_url()
             Police_LB.call_service_discovery()
-            Police_LB.record_to_circuit_breaker()
         
 
 
@@ -320,10 +326,11 @@ async def confirm_accident(entry: ConfirmAccidentEntry):
             Accident_LB.unregister_url()
             Accident_LB.call_service_discovery()
             raise HTTPException(status_code=202, detail="try again") 
+        elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
+            Accident_LB.record_to_circuit_breaker()
         else:
             Accident_LB.unregister_url()
             Accident_LB.call_service_discovery()
-            Accident_LB.record_to_circuit_breaker()
 
 
 if __name__ == "__main__":
