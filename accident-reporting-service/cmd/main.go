@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"senpainikolay/pad-sem7/accident-reporting-service/config"
 	"senpainikolay/pad-sem7/accident-reporting-service/internal/controller"
 	"senpainikolay/pad-sem7/accident-reporting-service/internal/models"
 	"senpainikolay/pad-sem7/accident-reporting-service/internal/repository"
@@ -16,31 +15,30 @@ import (
 	postgres "senpainikolay/pad-sem7/accident-reporting-service/pkg"
 	"syscall"
 
+	_ "github.com/joho/godotenv/autoload"
+
 	"gorm.io/gorm"
 )
 
 var db *gorm.DB
-var cnf config.Config
-var yamlFilePath = "config/config.yaml"
 
 func main() {
 
 	accRepo := repository.NewAccidentRepository(db)
 	accService := service.NewAccidentService(accRepo)
 
-	serviceDiscoveryReq("register", "localhost:6667", "POST")
+	serviceDiscoveryReq("register", os.Getenv("LOCALNAME")+":"+os.Getenv("SERVICE_PORT"), "POST")
 
 	// in case of force stop
 	go signalUnregisterThread()
 
 	log.Printf("starting gRPC API server...\n")
-	controller.Serve(accService, cnf.ServicePort)
+	controller.Serve(accService, ":"+os.Getenv("SERVICE_PORT"))
 
 }
 
 func init() {
-	cnf = config.NewConfig(yamlFilePath)
-	db = postgres.NewDBConnection(cnf)
+	db = postgres.NewDBConnection()
 	err := db.AutoMigrate(models.AccidentModel{})
 	if err != nil {
 		log.Fatalf("failed to migrate user model\n")
@@ -61,7 +59,7 @@ func init() {
 
 func serviceDiscoveryReq(route, serviceUrl, method string) {
 
-	url := fmt.Sprintf("http://localhost:8000/services/%s", route)
+	url := fmt.Sprintf("http://"+os.Getenv("SERVICE_DISCOVERY_HOST")+":"+os.Getenv("SERVICE_DISCOVERY_PORT")+"/services/%s", route)
 
 	requestData := map[string]string{
 		"service_type": "accident-reporting",
@@ -99,6 +97,6 @@ func signalUnregisterThread() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
 	log.Printf("FORCE EXIT")
-	serviceDiscoveryReq("unregister", "localhost:6667", "DELETE")
+	serviceDiscoveryReq("unregister", os.Getenv("LOCALNAME")+":"+os.Getenv("SERVICE_PORT"), "DELETE")
 	os.Exit(0)
 }

@@ -40,6 +40,7 @@ def gateway_status():
                 response_json = json_format.MessageToJson(response)
                 overall_status["police_service"] = json.loads(response_json)
         except grpc.RpcError as e:
+                Police_LB.unregister_url()
                 Police_LB.call_service_discovery()
                 overall_status["police_service"] =  str(e.code())
                 overall_status["ready"] = False
@@ -60,6 +61,7 @@ def gateway_status():
                 response_json = json_format.MessageToJson(response)
                 overall_status["accident_service"] = json.loads(response_json)
         except grpc.RpcError as e:
+                Accident_LB.unregister_url()
                 Accident_LB.call_service_discovery()
                 overall_status["accident_service"] = str(e.code())
                 overall_status["ready"] = False

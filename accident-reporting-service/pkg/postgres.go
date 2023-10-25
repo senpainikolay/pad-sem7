@@ -3,24 +3,25 @@ package postgres
 import (
 	"fmt"
 	"log"
-	"senpainikolay/pad-sem7/accident-reporting-service/config"
+	"os"
 
+	_ "github.com/joho/godotenv/autoload"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func NewDBConnection(cnf config.Config) *gorm.DB {
+func NewDBConnection() *gorm.DB {
 	dsn := fmt.Sprintf(`host=%s
 						user=%s 
 						password=%s 
 						dbname=%s 
 						port=%s 
 						sslmode=disable`,
-		cnf.PostgresHost,
-		cnf.UserDB,
-		cnf.PostgresPW,
-		cnf.PostgresDBName,
-		cnf.PostgresPort,
+		os.Getenv("POSTGRES_HOST"),
+		os.Getenv("USER_DB"),
+		os.Getenv("POSTGRES_PW"),
+		os.Getenv("POSTGRES_DB_NAME"),
+		os.Getenv("POSTGRES_PORT"),
 	)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {

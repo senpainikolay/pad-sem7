@@ -26,6 +26,7 @@ services:
         - pol1
         - pol2
         - pol3
+        - acc1
         - cache
   
   pol1:
@@ -90,6 +91,29 @@ services:
     depends_on:
       - mongodb
       - service_discovery
+
+  acc1:
+    container_name: acc_repo1
+    build:
+      context: ./accident-reporting-service
+      dockerfile: Dockerfile 
+      args:
+          port: 6676
+    ports:
+      - "6676:6676" 
+    environment:
+    - SERVICE_PORT=6676
+    - LOCALNAME=acc_repo1
+    - SERVICE_DISCOVERY_PORT=8000
+    - SERVICE_DISCOVERY_HOST=service_discovery_pad
+    - POSTGRES_HOST=postgres_pad
+    - USER_DB=user
+    - POSTGRES_PW=password
+    - POSTGRES_DB_NAME=test_db
+    - POSTGRES_PORT=5432
+    depends_on:
+      - postgres
+      - service_discovery 
 
   postgres:
     container_name: postgres_pad

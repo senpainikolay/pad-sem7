@@ -14,6 +14,7 @@ import (
 )
 
 func InformExternalService(data models.ExernalServiceData, long, lat float64) error {
+	// hardcoded
 	conn, err := grpc.Dial(":6666", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
