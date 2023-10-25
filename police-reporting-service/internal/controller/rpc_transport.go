@@ -41,6 +41,7 @@ func Serve(police_service IPoliceReportingService, bind string) {
 					return handler(ctx, req)
 				default:
 					if !LIMITER.Allow() {
+						log.Println("Limit Reach")
 						return nil, status.Error(codes.ResourceExhausted, "rate limit exceeded")
 					}
 					return handler(ctx, req)

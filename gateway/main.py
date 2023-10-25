@@ -6,14 +6,14 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from load_balancer import LoadBalancer 
 from redis_client import RedisClient
-
+import os
 
 city_harcoded = "chisinau"
 street_hardcoded = "vm 99" 
 
-Police_LB = LoadBalancer('localhost:8000', "police-reporting") 
-Accident_LB = LoadBalancer('localhost:8000', "accident-reporting")
-Redis_Client = RedisClient()
+Police_LB = LoadBalancer(os.getenv("SERVICE_DISCOVERY_HOST") + ":"  + os.getenv("SERVICE_DISCOVERY_PORT") , "police-reporting") 
+Accident_LB = LoadBalancer(os.getenv("SERVICE_DISCOVERY_HOST") + ":"  + os.getenv("SERVICE_DISCOVERY_PORT") , "accident-reporting")
+Redis_Client = RedisClient(host = os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT"))
 
 TIMEOUT_SECONDS = 5
 

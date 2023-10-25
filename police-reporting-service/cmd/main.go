@@ -13,30 +13,28 @@ import (
 	"senpainikolay/pad-sem7/police-reporting-service/internal/service"
 	mongodbp "senpainikolay/pad-sem7/police-reporting-service/pkg"
 	"syscall"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func main() {
-	dbName := "test_db"
 	MONGO_CLIENT := mongodbp.NewDBConnection()
 
-	policeRepo := repository.NewPoliceRepository(MONGO_CLIENT, dbName)
+	policeRepo := repository.NewPoliceRepository(MONGO_CLIENT, os.Getenv("DB_NAME"))
 	policeService := service.NewPoliceService(policeRepo)
 
-	serviceDiscoveryReq("register", "localhost:6666", "POST")
-
-	// in case of error
-	defer serviceDiscoveryReq("unregister", "localhost:6666", "DELETE")
+	serviceDiscoveryReq("register", os.Getenv("LOCALNAME")+":"+os.Getenv("SERVICE_PORT"), "POST")
 
 	// in case of force stop
 	go signalUnregisterThread()
 
-	controller.Serve(policeService, ":6666")
+	controller.Serve(policeService, ":"+os.Getenv("SERVICE_PORT"))
 
 }
 
 func serviceDiscoveryReq(route, serviceUrl, method string) {
 
-	url := fmt.Sprintf("http://localhost:8000/services/%s", route)
+	url := fmt.Sprintf("http://"+os.Getenv("SERVICE_DISCOVERY_HOST")+":"+os.Getenv("SERVICE_DISCOVERY_PORT")+"/services/%s", route)
 
 	requestData := map[string]string{
 		"service_type": "police-reporting",
@@ -74,6 +72,6 @@ func signalUnregisterThread() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
 	log.Printf("FORCE EXIT")
-	serviceDiscoveryReq("unregister", "localhost:6666", "DELETE")
+	serviceDiscoveryReq("unregister", os.Getenv("LOCALNAME")+":"+os.Getenv("SERVICE_PORT"), "DELETE")
 	os.Exit(0)
 }

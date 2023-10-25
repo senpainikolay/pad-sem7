@@ -1,6 +1,96 @@
 version: '3.9'
 services:
 
+  service_discovery:
+      container_name: service_discovery_pad
+      build:
+        context: ./service-discovery
+        dockerfile: Dockerfile
+      ports:
+        - 8000:8000
+
+  gateway:
+      container_name: gateway_pad
+      build:
+        context: ./gateway
+        dockerfile: Dockerfile
+      ports:
+        - 8080:8080
+      environment:
+        - SERVICE_DISCOVERY_PORT=8000
+        - SERVICE_DISCOVERY_HOST=service_discovery_pad
+        - REDIS_HOST=redis_pad
+        - REDIS_PORT=6379
+      depends_on:
+        - service_discovery 
+        - pol1
+        - pol2
+        - pol3
+        - cache
+  
+  pol1:
+    container_name: police_repo1
+    build:
+      context: ./police-reporting-service
+      dockerfile: Dockerfile 
+      args:
+          port: 6666
+    ports:
+      - "6666:6666" 
+    environment:
+     - DB_NAME=test_db
+     - SERVICE_PORT=6666
+     - MONGODB_HOST=mongo_pad
+     - MONGODB_PORT=27017
+     - LOCALNAME=police_repo1
+     - SERVICE_DISCOVERY_PORT=8000
+     - SERVICE_DISCOVERY_HOST=service_discovery_pad
+    depends_on:
+      - mongodb
+      - service_discovery 
+
+  pol2:
+    container_name: police_repo2
+    build:
+      context: ./police-reporting-service
+      dockerfile: Dockerfile 
+      args:
+          port: 6667
+    ports:
+      - "6667:6667" 
+    environment:
+     - DB_NAME=test_db
+     - SERVICE_PORT=6667
+     - MONGODB_HOST=mongo_pad
+     - MONGODB_PORT=27017
+     - LOCALNAME=police_repo2
+     - SERVICE_DISCOVERY_PORT=8000
+     - SERVICE_DISCOVERY_HOST=service_discovery_pad
+    depends_on:
+      - mongodb
+      - service_discovery
+  
+  pol3:
+    container_name: police_repo3
+    build:
+      context: ./police-reporting-service
+      dockerfile: Dockerfile 
+      args:
+          port: 6668
+    ports:
+      - "6668:6668" 
+    environment:
+     - DB_NAME=test_db
+     - SERVICE_PORT=6668
+     - MONGODB_HOST=mongo_pad
+     - MONGODB_PORT=27017
+     - LOCALNAME=police_repo3
+     - SERVICE_DISCOVERY_PORT=8000
+     - SERVICE_DISCOVERY_HOST=service_discovery_pad
+    depends_on:
+      - mongodb
+      - service_discovery
+
   postgres:
     container_name: postgres_pad
     build:
@@ -30,7 +120,7 @@ services:
     image: mongo:6-jammy
     container_name: mongo_pad
     ports:
-      - '2717:27017'
+      - '27017:27017'
     volumes: 
       - mongodb:/data/mongo 
 
