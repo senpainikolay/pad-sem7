@@ -6,6 +6,7 @@ import (
 	"net"
 	"senpainikolay/pad-sem7/police-reporting-service/internal/models"
 	pb "senpainikolay/pad-sem7/police-reporting-service/internal/pb"
+	"time"
 
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
@@ -25,7 +26,7 @@ type PoliceReportingServer struct {
 	policeReportingSvc IPoliceReportingService
 }
 
-var LIMITER = rate.NewLimiter(1, 1)
+var LIMITER = rate.NewLimiter(rate.Every(time.Second), 60)
 
 func Serve(police_service IPoliceReportingService, bind string) {
 	listener, err := net.Listen("tcp", bind)
@@ -41,7 +42,7 @@ func Serve(police_service IPoliceReportingService, bind string) {
 					return handler(ctx, req)
 				default:
 					if !LIMITER.Allow() {
-						log.Println("Limit Reach")
+						log.Println("Pings reached the limit")
 						return nil, status.Error(codes.ResourceExhausted, "rate limit exceeded")
 					}
 					return handler(ctx, req)

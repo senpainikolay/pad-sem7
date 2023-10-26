@@ -26,7 +26,7 @@ type AccidentReportingServer struct {
 	accReportingSvc IAccidentReportingService
 }
 
-var LIMITER = rate.NewLimiter(rate.Every(time.Second), 1)
+var LIMITER = rate.NewLimiter(rate.Every(time.Second), 60)
 
 func Serve(acc_service IAccidentReportingService, bind string) {
 	listener, err := net.Listen("tcp", bind)
@@ -42,6 +42,7 @@ func Serve(acc_service IAccidentReportingService, bind string) {
 					return handler(ctx, req)
 				default:
 					if !LIMITER.Allow() {
+						log.Println("Pings reached the limit")
 						return nil, status.Error(codes.ResourceExhausted, "rate limit exceeded")
 					}
 					return handler(ctx, req)
