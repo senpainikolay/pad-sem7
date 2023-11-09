@@ -1,0 +1,235 @@
+{
+	"info": {
+		"_postman_id": "c1718c20-6cf9-4db9-a0b6-3d9451ad8091",
+		"name": "GATEWAY_PAD",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23414077"
+	},
+	"item": [
+		{
+			"name": "fetchPolice",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \r\n   \"user_lat\": 36.8950, \r\n   \"user_long\": -75.0364,\r\n   \"zoom_index\": 100,\r\n   \"city\" : \"chisinau\"\r\n\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/fetchPolice",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"fetchPolice"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "status",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/status",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "fetchAccidents",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \r\n   \"user_lat\": 36.8950, \r\n   \"user_long\": -75.0364,\r\n   \"zoom_index\": 100, \r\n    \"city\" : \"chisinau\"\r\n\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/fetchAccidents",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"fetchAccidents"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "postPolice",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \r\n  \"pol_lat\": 35.8951,\r\n  \"pol_long\": -74.0364, \r\n     \"city\" : \"chisinau\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/postPolice",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"postPolice"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "informExternalService",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \r\n     \"city\" : \"chisinau\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/informExternal",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"informExternal"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "confirmPolice",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \r\n\r\n \"confirmation\": true, \r\n \"pol_lat\":35.8951 ,\r\n  \"pol_long\": -74.0364,\r\n   \"city\" : \"chisinau\"\r\n\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/confirmPolice",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"confirmPolice"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "postAccident",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \r\n   \"accident_long\": -72.0364,\r\n    \"accident_lat\":  34.8951,\r\n    \"cars_involved\": \"2\",\r\n    \"city\" : \"chisinau\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/postAccident",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"postAccident"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "confirmAccident",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \r\n   \"accident_confirmation\": true, \r\n   \"police_confirmation\": false, \r\n   \"accident_long\": -72.0364,\r\n    \"accident_lat\":  34.8951,\r\n    \"city\" : \"chisinau\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/confirmAccident",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"confirmAccident"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
