@@ -40,13 +40,13 @@ func main() {
 				},
 			})
 			st, ok := status.FromError(err)
+			if ok && st.Code() == codes.DeadlineExceeded {
+				responseChan <- "Deadline exceeded"
+				return
+			}
 
 			if ok && st.Code() == codes.ResourceExhausted {
 				responseChan <- "Reached the requests rate limit "
-				return
-			}
-			if ok && st.Code() == codes.DeadlineExceeded {
-				responseChan <- "Deadline exceeded"
 				return
 			}
 
