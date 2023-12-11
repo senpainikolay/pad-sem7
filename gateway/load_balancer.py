@@ -15,9 +15,8 @@ class LoadBalancer:
         self.circuit_breakers = []
         self.current_index = 0
         self.logger = logger 
-        self.__call_service_discovery
 
-    def __call_service_discovery(self):
+    def call_service_discovery(self):
         try:
             self.server_stubs = [] 
             self.server_urls = [] 
@@ -81,7 +80,7 @@ class LoadBalancer:
                 self.logger.info("No service Registered!")
                 return None
             try:
-                self.__call_service_discovery()
+                self.call_service_discovery()
                 return self.get_next_stub(-1)
             except Exception as e:
                 self.logger.info(f"Something wrong with service discovery Exception{e}")

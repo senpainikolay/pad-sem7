@@ -45,6 +45,7 @@ class UserGeoInfo(BaseModel):
 @app.get('/fetchPolice') 
 def fetch_police(params: UserGeoInfo,reroute_counter=0):
     if reroute_counter >= REROUTE_THRESHOLD:
+        Police_LB.call_service_discovery()
         raise HTTPException(status_code=503,detail="circuit break on reroute") 
     #res = Redis_Client.get_pol_values(params.city,params.user_long, params.user_lat) 
     #if len(res) != 0:
@@ -96,6 +97,10 @@ class UserGeoInfo(BaseModel):
 
 @app.get('/fetchAccidents')
 def fetch_accs(params: UserGeoInfo,reroute_counter=0):
+    if reroute_counter >= REROUTE_THRESHOLD:
+        Accident_LB.call_service_discovery()
+        raise HTTPException(status_code=503,detail="circuit break on reroute") 
+     
     # res = Redis_Client.get_acc_values(params.city,params.user_long, params.user_lat)
     # if len(res) != 0:
     #     return json.loads( json.dumps(res))
@@ -145,6 +150,12 @@ class PolicePostParams(BaseModel):
 
 @app.post('/postPolice')
 def post_police(params: PolicePostParams,reroute_counter=0):
+
+    if reroute_counter >= REROUTE_THRESHOLD:
+        Police_LB.call_service_discovery()
+        raise HTTPException(status_code=503,detail="circuit break on reroute") 
+
+
     police_info = police_pb2.PostPoliceEntry(
         pol_long=params.pol_long,
         pol_lat=params.pol_lat,
@@ -188,6 +199,12 @@ class PostAccidentEntry(BaseModel):
 
 @app.post('/postAccident')
 def post_accident(params: PostAccidentEntry,reroute_counter=0):
+
+    if reroute_counter >= REROUTE_THRESHOLD:
+        Accident_LB.call_service_discovery()
+        raise HTTPException(status_code=503,detail="circuit break on reroute") 
+     
+
     accident_info = accident_pb2.PostAccidentEntry(
         accident_long=params.accident_long,
         accident_lat=params.accident_lat,
@@ -233,6 +250,10 @@ class PoliceConfirmParams(BaseModel):
 
 @app.post('/confirmPolice')
 def confirm_police(params: PoliceConfirmParams,reroute_counter=0):
+    if reroute_counter >= REROUTE_THRESHOLD:
+        Police_LB.call_service_discovery()
+        raise HTTPException(status_code=503,detail="circuit break on reroute") 
+     
     confirm_info = police_pb2.ConfirmPoliceEntry(
         pol_long=params.pol_long,
         pol_lat=params.pol_lat,
@@ -280,6 +301,10 @@ class ConfirmAccidentEntry(BaseModel):
 
 @app.post('/confirmAccident')
 async def confirm_accident(params: ConfirmAccidentEntry,reroute_counter=0):
+    if reroute_counter >= REROUTE_THRESHOLD:
+        Accident_LB.call_service_discovery()
+        raise HTTPException(status_code=503,detail="circuit break on reroute") 
+     
     confirm_info = accident_pb2.ConfirmAccidentEntry(
         accident_long=params.accident_long,
         accident_lat=params.accident_lat,
