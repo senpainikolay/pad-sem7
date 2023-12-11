@@ -3,11 +3,11 @@ module senpainikolay/pad-sem7/police-reporting-service
 go 1.21.0
 
 require (
+	github.com/joho/godotenv v1.5.1
 	go.mongodb.org/mongo-driver v1.12.1
 	golang.org/x/time v0.3.0
 	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

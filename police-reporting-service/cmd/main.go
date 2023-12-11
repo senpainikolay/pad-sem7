@@ -26,7 +26,7 @@ func main() {
 	serviceDiscoveryReq("register", os.Getenv("LOCALNAME")+":"+os.Getenv("SERVICE_PORT"), "POST")
 
 	// in case of force stop
-	go signalUnregisterThread()
+	// go signalUnregisterThread()
 
 	controller.Serve(policeService, ":"+os.Getenv("SERVICE_PORT"))
 
