@@ -153,16 +153,6 @@ services:
       - POSTGRES_USER=user
       - POSTGRES_DB=test_db  
 
-  cache:
-    image: redis:6.2-alpine 
-    container_name: redis_pad
-    restart: always
-    ports:
-      - '6379:6379'
-    volumes: 
-      - cache:/data/redis
-    environment:
-      - REDIS_PASSWORD=password 
 
   mongodb:
     image: mongo:6-jammy
@@ -170,13 +160,84 @@ services:
     ports:
       - '27017:27017'
     volumes: 
-      - mongodb:/data/mongo 
+      - mongodb:/data/mongo  
+
+
+  redis-node-1:
+    image: redis:7.2
+    ports:
+      - 7000:7000
+    container_name: redis-node1
+    volumes:
+      - ./redis:/redis
+    command: redis-server /redis/redis0.conf
+
+  redis-node-2:
+    image: redis:7.2
+    ports:
+      - 7001:7001
+    container_name: redis-node2
+    volumes:
+      - ./redis:/redis
+    command: redis-server /redis/redis1.conf
+
+  redis-node-3:
+    image: redis:7.2
+    ports:
+      - 7002:7002
+    container_name: redis-node3
+    volumes:
+      - ./redis:/redis
+    command: redis-server /redis/redis2.conf
+
+  redis-node-4:
+    image: redis:7.2
+    ports:
+      - 7003:7003
+    container_name: redis-node4
+    volumes:
+      - ./redis:/redis
+    command: redis-server /redis/redis3.conf
+
+  redis-node-5:
+    image: redis:7.2
+    ports:
+      - 7004:7004
+    container_name: redis-node5
+    volumes:
+      - ./redis:/redis
+    command: redis-server /redis/redis4.conf
+
+  redis-node-6:
+    image: redis:7.2
+    ports:
+      - 7005:7005
+    container_name: redis-node6
+    volumes:
+      - ./redis:/redis
+    command: redis-server /redis/redis5.conf
+
+  redis-cluster-creator:
+    image: redis:7.2
+    ports:
+      - 7010:7010
+    command: redis-cli -p 7000 --cluster create redis-node1:7000 redis-node2:7001 redis-node3:7002 redis-node4:7003 redis-node5:7004 redis-node6:7005 --cluster-replicas 1 --cluster-yes
+    depends_on:
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+      - redis-node-4
+      - redis-node-5
+      - redis-node-6
+
 
     
 volumes:
   postgres-db:
     driver: local 
-  cache:
-    driver: local 
   mongodb:
-    driver: local
+    driver: local 
+
+
+
+
