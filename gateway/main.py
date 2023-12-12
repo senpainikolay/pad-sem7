@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 import logging
 
 import threading
-
+from saga_coordonator import SagaTransactionCoordinator
  
 
 load_dotenv()
@@ -47,7 +47,11 @@ def fetch_police(params: UserGeoInfo,reroute_counter=0):
     if reroute_counter >= REROUTE_THRESHOLD:
         Police_LB.call_service_discovery()
         raise HTTPException(status_code=503,detail="circuit break on reroute") 
-    res = Redis_Client.get_pol_values(params.city,params.user_long, params.user_lat) 
+    res = list()
+    try:
+        res = Redis_Client.get_pol_values(params.city,params.user_long, params.user_lat) 
+    except Exception as e :
+        logger.info(str(e))
     if len(res) != 0:
        return json.loads( json.dumps(res))
 
@@ -69,7 +73,10 @@ def fetch_police(params: UserGeoInfo,reroute_counter=0):
 
     try:
         response_json =  fun_req(cl,TIMEOUT_SECONDS)
-        Redis_Client.add_pol_coords(params.city, json.loads(response_json))
+        try:
+            Redis_Client.add_pol_coords(params.city, json.loads(response_json))
+        except Exception as e:
+            logger.info(str(e))
         return  json.loads(response_json) 
 
     except Exception as e:
@@ -101,7 +108,11 @@ def fetch_accs(params: UserGeoInfo,reroute_counter=0):
         Accident_LB.call_service_discovery()
         raise HTTPException(status_code=503,detail="circuit break on reroute") 
      
-    res = Redis_Client.get_acc_values(params.city,params.user_long, params.user_lat)
+    res = list()
+    try:
+        res = Redis_Client.get_acc_values(params.city,params.user_long, params.user_lat)
+    except Exception as e :
+        logger.info(str(e))
     if len(res) != 0:
         return json.loads( json.dumps(res))
     
@@ -122,8 +133,11 @@ def fetch_accs(params: UserGeoInfo,reroute_counter=0):
         response = cl.FetchAccidents(req, timeout=timeout) 
         return json_format.MessageToJson(response)
     try:
-        response_json =  fun_req(cl,TIMEOUT_SECONDS)      
-        #Redis_Client.add_acc_coords(params.city, json.loads(response_json))
+        response_json =  fun_req(cl,TIMEOUT_SECONDS)  
+        try:
+            Redis_Client.add_acc_coords(params.city, json.loads(response_json))
+        except Exception as e:
+            logger.info(str(e))
         return  json.loads(response_json)
 
     except Exception as e:
@@ -172,8 +186,11 @@ def post_police(params: PolicePostParams,reroute_counter=0):
         return  json_format.MessageToJson(response)  
 
     try:
-        response_json =  fun_req(cl,TIMEOUT_SECONDS)      
-        Redis_Client.delete_pol_city_info(params.city)
+        response_json =  fun_req(cl,TIMEOUT_SECONDS)  
+        try:
+            Redis_Client.delete_pol_city_info(params.city)
+        except Exception as e:
+            logger.info(str(e))      
         return  json.loads(response_json)
     
     except Exception as e:
@@ -224,7 +241,10 @@ def post_accident(params: PostAccidentEntry,reroute_counter=0):
 
     try:
         response_json =  fun_req(cl,TIMEOUT_SECONDS) 
-        Redis_Client.delete_acc_city_info(params.city)
+        try:
+            Redis_Client.delete_acc_city_info(params.city)
+        except Exception as e:
+            logger.info(str(e))
         return  json.loads(response_json)
 
     except Exception as e:
@@ -242,13 +262,16 @@ def post_accident(params: PostAccidentEntry,reroute_counter=0):
 
 
 
+
+
+
 class PoliceConfirmParams(BaseModel):
     city:str
     pol_long: float
     pol_lat: float
     confirmation: bool 
 
-@app.post('/confirmPolice')
+@app.put('/confirmPolice')
 def confirm_police(params: PoliceConfirmParams,reroute_counter=0):
     if reroute_counter >= REROUTE_THRESHOLD:
         Police_LB.call_service_discovery()
@@ -271,8 +294,13 @@ def confirm_police(params: PoliceConfirmParams,reroute_counter=0):
         return  json_format.MessageToJson(response)
 
     try:
-        response_json =  fun_req(cl,TIMEOUT_SECONDS)      
-        #Redis_Client.delete_pol_city_info(params.city)
+        response_json =  fun_req(cl,TIMEOUT_SECONDS)
+
+        try:
+            Redis_Client.delete_pol_city_info(params.city)
+        except Exception as e:
+            logger.info(str(e))    
+
         return  json.loads(response_json)
 
     except Exception as e:
@@ -299,8 +327,8 @@ class ConfirmAccidentEntry(BaseModel):
     accident_confirmation: bool
 
 
-@app.post('/confirmAccident')
-async def confirm_accident(params: ConfirmAccidentEntry,reroute_counter=0):
+@app.put('/confirmAccident')
+def confirm_accident(params: ConfirmAccidentEntry,reroute_counter=0):
     if reroute_counter >= REROUTE_THRESHOLD:
         Accident_LB.call_service_discovery()
         raise HTTPException(status_code=503,detail="circuit break on reroute") 
@@ -323,8 +351,12 @@ async def confirm_accident(params: ConfirmAccidentEntry,reroute_counter=0):
         return json_format.MessageToJson(response)
 
     try:
-        response_json =  fun_req(cl,TIMEOUT_SECONDS)      
-        #Redis_Client.delete_acc_city_info(entry.city)
+        response_json =  fun_req(cl,TIMEOUT_SECONDS)    
+        try:
+            Redis_Client.delete_acc_city_info(params.city)
+        except Exception as e:
+            logger.info(str(e))    
+              
         return  json.loads(response_json)
 
     except Exception as e:
@@ -384,7 +416,34 @@ def gateway_status():
         return json.loads(json.dumps(overall_status))
 
     except Exception as e:
-            return HTTPException(status_code=500, detail=str(e))
+            return HTTPException(status_code=500, detail=str(e)) 
+    
+
+    
+@app.post('/informExternalService') 
+def inform_external(params: PostAccidentEntry):
+
+    def wrapped1():
+        return post_accident(params=params)
+
+    def wrapped2():
+        return fetch_police(params=UserGeoInfo(city=params.city,user_lat=params.accident_lat,user_long=params.accident_long,zoom_index=100))
+
+    def reverse1():
+        confirm_accident(params=ConfirmAccidentEntry(city=params.city,accident_lat=params.accident_lat,accident_long=params.accident_long,police_confirmation=True,accident_confirmation=False))
+    def reverse2():
+        pass
+
+    saga_coordonator = SagaTransactionCoordinator(logger)
+    saga_coordonator.add_step(wrapped1, reverse1)
+    saga_coordonator.add_step(wrapped2, reverse2)
+
+    try:
+        results = saga_coordonator.execute()
+        return  json.loads({ "data" : [results[0],results[1]] })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 

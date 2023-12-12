@@ -30,7 +30,7 @@ func main() {
 	serviceDiscoveryReq("register", os.Getenv("LOCALNAME")+":"+os.Getenv("SERVICE_PORT"), "POST")
 
 	// in case of force stop
-	go signalUnregisterThread()
+	//go signalUnregisterThread()
 
 	log.Printf("starting gRPC API server...\n")
 	controller.Serve(accService, ":"+os.Getenv("SERVICE_PORT"))

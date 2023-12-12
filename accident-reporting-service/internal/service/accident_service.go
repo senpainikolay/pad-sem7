@@ -2,10 +2,7 @@ package service
 
 import (
 	"fmt"
-	"log"
 	"senpainikolay/pad-sem7/accident-reporting-service/internal/models"
-	policeserviceclient "senpainikolay/pad-sem7/accident-reporting-service/internal/police-service-client"
-	"time"
 
 	"golang.org/x/time/rate"
 )
@@ -19,8 +16,6 @@ type IAccidentRepository interface {
 	UpdateAccConfirmationIndex(uint, int) error
 	Ping() error
 }
-
-const THRESHOLD_TIMEOUT_SERVICE_CALL = 900
 
 type AccidentService struct {
 	accidentRepo IAccidentRepository
@@ -56,18 +51,6 @@ func (svc *AccidentService) ConfirmAccident(confInfo models.ConfirmationAccident
 	acc, err := svc.accidentRepo.GetByPos(confInfo.Long, confInfo.Lat)
 	if err != nil {
 		return err
-	}
-
-	if (time.Now().Unix()-acc.CreatedAt.Unix()) > THRESHOLD_TIMEOUT_SERVICE_CALL && !confInfo.PoliceConfirmation && confInfo.AccidentConfirmation {
-		var data models.ExernalServiceData
-		data.CarsInvolved = int(acc.CarInvolved)
-		data.City = acc.City
-		data.StreetName = acc.StreetName
-		err = policeserviceclient.InformExternalService(data, confInfo.Long, confInfo.Lat)
-		if err != nil {
-			log.Println("ERROR ON CALLING THE EXTERNAL SERVICE: %v", err.Error())
-		}
-		return svc.accidentRepo.DeleteByPos(confInfo.Long, confInfo.Lat)
 	}
 
 	if acc.ConfirmedBy > 2 {

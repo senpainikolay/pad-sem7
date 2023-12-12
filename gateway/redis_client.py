@@ -36,7 +36,7 @@ class RedisClient:
                     self.redis_client.geoadd(city + "Police", (pol["polLong"], pol["polLat"], str(pol["polLong"]) + str(pol["polLat"]) + "KEK" + str(pol["confirmedBy"])))
                 else:
                     self.redis_client.geoadd(city + "Police", (pol["polLong"], pol["polLat"], str(pol["polLong"]) + str(pol["polLat"])+ "KEK" + str(pol['confirmationNotification']))) 
-                self.redis_client.expire(city+"Police", 300)
+                self.redis_client.expire(city+"Police", 30)
         except Exception as e:
             if self.__check_e(e):
                 return self.add_pol_coords(city,resp)
@@ -66,7 +66,7 @@ class RedisClient:
         res = list()
         results = list()
         try:
-            results = self.redis_client.georadius(city+"Police", long, lat, 1000000, unit='km', withdist=True, withcoord=True) 
+            results = self.redis_client.georadius(city+"Police", long, lat, 100000, unit='km', withdist=True, withcoord=True) 
         except Exception as e:
             if self.__check_e(e):
                 return self.get_pol_values( city,long,lat)
@@ -88,7 +88,7 @@ class RedisClient:
         res = list()
         results = list()
         try:
-            results = self.redis_client.georadius(city+"Accident", long, lat, 1000000, unit='km', withdist=True, withcoord=True) 
+            results = self.redis_client.georadius(city+"Accident", long, lat, 100000, unit='km', withdist=True, withcoord=True) 
         except Exception as e:
             if self.__check_e(e):
                 return self.get_acc_values(city, long,lat)
