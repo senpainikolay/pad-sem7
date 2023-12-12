@@ -51,5 +51,5 @@ docker compose up --build
 > `POST /informExternalService`
 - It fetches the accident and police in the city. If the accident creation timestamp is bigger than 15 minutes and the police_confirmation is False, it takes the accident record and makes futher request to Police Service with accident coords.
 Once the police have been detected on this range, the accident and police data is aggregated and sent further to External Service.
-* Request Body: `{ "city" : string}`
-* Response Body: `{ "accidents_sent" : int  }`
+* Request Body: `{ "accident_long": float, "accident_lat": float, "city":string, "carsInvolved": int  }`
+* Response Body: `{ "data" : [infoAboutAccident,InfoAboutPolice]  }`
