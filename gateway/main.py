@@ -28,7 +28,7 @@ Police_LB = LoadBalancer(os.getenv("SERVICE_DISCOVERY_HOST") + ":"  + os.getenv(
 Accident_LB = LoadBalancer(os.getenv("SERVICE_DISCOVERY_HOST") + ":"  + os.getenv("SERVICE_DISCOVERY_PORT") , "accident-reporting", logger)
 
 
-#Redis_Client = RedisClient(host = os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT")) 
+Redis_Client = RedisClient(host = os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT")) 
 
 
 TIMEOUT_SECONDS = 3
@@ -47,9 +47,9 @@ def fetch_police(params: UserGeoInfo,reroute_counter=0):
     if reroute_counter >= REROUTE_THRESHOLD:
         Police_LB.call_service_discovery()
         raise HTTPException(status_code=503,detail="circuit break on reroute") 
-    #res = Redis_Client.get_pol_values(params.city,params.user_long, params.user_lat) 
-    #if len(res) != 0:
-    #   return json.loads( json.dumps(res))
+    res = Redis_Client.get_pol_values(params.city,params.user_long, params.user_lat) 
+    if len(res) != 0:
+       return json.loads( json.dumps(res))
 
     user_info = police_pb2.GetPoliceUserEntry(
         user_long=params.user_long,
@@ -69,7 +69,7 @@ def fetch_police(params: UserGeoInfo,reroute_counter=0):
 
     try:
         response_json =  fun_req(cl,TIMEOUT_SECONDS)
-        #Redis_Client.add_pol_coords(params.city, json.loads(response_json))
+        Redis_Client.add_pol_coords(params.city, json.loads(response_json))
         return  json.loads(response_json) 
 
     except Exception as e:
@@ -101,9 +101,9 @@ def fetch_accs(params: UserGeoInfo,reroute_counter=0):
         Accident_LB.call_service_discovery()
         raise HTTPException(status_code=503,detail="circuit break on reroute") 
      
-    # res = Redis_Client.get_acc_values(params.city,params.user_long, params.user_lat)
-    # if len(res) != 0:
-    #     return json.loads( json.dumps(res))
+    res = Redis_Client.get_acc_values(params.city,params.user_long, params.user_lat)
+    if len(res) != 0:
+        return json.loads( json.dumps(res))
     
     user_info = accident_pb2.GetAccidentUserEntry(
         user_long=params.user_long,
@@ -173,7 +173,7 @@ def post_police(params: PolicePostParams,reroute_counter=0):
 
     try:
         response_json =  fun_req(cl,TIMEOUT_SECONDS)      
-        #Redis_Client.delete_pol_city_info(params.city)
+        Redis_Client.delete_pol_city_info(params.city)
         return  json.loads(response_json)
     
     except Exception as e:
@@ -224,7 +224,7 @@ def post_accident(params: PostAccidentEntry,reroute_counter=0):
 
     try:
         response_json =  fun_req(cl,TIMEOUT_SECONDS) 
-        #Redis_Client.delete_acc_city_info(params.city)
+        Redis_Client.delete_acc_city_info(params.city)
         return  json.loads(response_json)
 
     except Exception as e:
