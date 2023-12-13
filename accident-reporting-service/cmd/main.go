@@ -7,20 +7,30 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"senpainikolay/pad-sem7/accident-reporting-service/internal/controller"
 	"senpainikolay/pad-sem7/accident-reporting-service/internal/models"
 	"senpainikolay/pad-sem7/accident-reporting-service/internal/repository"
 	"senpainikolay/pad-sem7/accident-reporting-service/internal/service"
 	postgres "senpainikolay/pad-sem7/accident-reporting-service/pkg"
-	"syscall"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"gorm.io/gorm"
 )
 
 var db *gorm.DB
+
+var (
+	totalRequests = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "pad_req_counter",
+			Help: "Count the request made by user.",
+		},
+		[]string{"Status"},
+	)
+)
 
 func main() {
 
@@ -29,11 +39,15 @@ func main() {
 
 	serviceDiscoveryReq("register", os.Getenv("LOCALNAME")+":"+os.Getenv("SERVICE_PORT"), "POST")
 
-	// in case of force stop
-	//go signalUnregisterThread()
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		if err := http.ListenAndServe(":"+os.Getenv("HTTP_PORT"), nil); err != nil {
+			log.Fatalf("Failed to start metrics server: %v", err)
+		}
+	}()
 
 	log.Printf("starting gRPC API server...\n")
-	controller.Serve(accService, ":"+os.Getenv("SERVICE_PORT"))
+	controller.Serve(accService, ":"+os.Getenv("SERVICE_PORT"), totalRequests)
 
 }
 
@@ -54,6 +68,8 @@ func init() {
 			log.Fatalf(err.Error())
 		}
 	}
+
+	prometheus.MustRegister(totalRequests)
 
 }
 
@@ -90,13 +106,4 @@ func serviceDiscoveryReq(route, serviceUrl, method string) {
 	} else {
 		log.Printf("Request not succesful, code: %v", resp.StatusCode)
 	}
-}
-
-func signalUnregisterThread() {
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	<-stop
-	log.Printf("FORCE EXIT")
-	serviceDiscoveryReq("unregister", os.Getenv("LOCALNAME")+":"+os.Getenv("SERVICE_PORT"), "DELETE")
-	os.Exit(0)
 }

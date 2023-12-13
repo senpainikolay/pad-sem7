@@ -8,6 +8,7 @@ import (
 	pb "senpainikolay/pad-sem7/police-reporting-service/internal/pb"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -28,7 +29,7 @@ type PoliceReportingServer struct {
 
 var LIMITER = rate.NewLimiter(rate.Every(time.Second), 60)
 
-func Serve(police_service IPoliceReportingService, bind string) {
+func Serve(police_service IPoliceReportingService, bind string, totalRequests *prometheus.CounterVec) {
 	listener, err := net.Listen("tcp", bind)
 	if err != nil {
 		log.Fatalf("gRPC server error: failure to bind %v\n", bind)
@@ -39,13 +40,25 @@ func Serve(police_service IPoliceReportingService, bind string) {
 			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 				switch info.FullMethod {
 				case "/proto.PoliceReportingService/HealthCheck":
-					return handler(ctx, req)
+					resp, err := handler(ctx, req)
+					if err != nil {
+						totalRequests.WithLabelValues("Failed").Inc()
+					} else {
+						totalRequests.WithLabelValues("Success").Inc()
+					}
+					return resp, err
 				default:
 					if !LIMITER.Allow() {
 						log.Println("Pings reached the limit")
 						return nil, status.Error(codes.ResourceExhausted, "rate limit exceeded")
 					}
-					return handler(ctx, req)
+					resp, err := handler(ctx, req)
+					if err != nil {
+						totalRequests.WithLabelValues("Failed").Inc()
+					} else {
+						totalRequests.WithLabelValues("Success").Inc()
+					}
+					return resp, err
 				}
 			},
 		),

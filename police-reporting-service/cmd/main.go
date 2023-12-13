@@ -7,14 +7,24 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"senpainikolay/pad-sem7/police-reporting-service/internal/controller"
 	"senpainikolay/pad-sem7/police-reporting-service/internal/repository"
 	"senpainikolay/pad-sem7/police-reporting-service/internal/service"
 	mongodbp "senpainikolay/pad-sem7/police-reporting-service/pkg"
-	"syscall"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+var (
+	totalRequests = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "pad_req_counter",
+			Help: "Count the request made by user.",
+		},
+		[]string{"Status"},
+	)
 )
 
 func main() {
@@ -25,10 +35,14 @@ func main() {
 
 	serviceDiscoveryReq("register", os.Getenv("LOCALNAME")+":"+os.Getenv("SERVICE_PORT"), "POST")
 
-	// in case of force stop
-	// go signalUnregisterThread()
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		if err := http.ListenAndServe(":"+os.Getenv("HTTP_PORT"), nil); err != nil {
+			log.Fatalf("Failed to start metrics server: %v", err)
+		}
+	}()
 
-	controller.Serve(policeService, ":"+os.Getenv("SERVICE_PORT"))
+	controller.Serve(policeService, ":"+os.Getenv("SERVICE_PORT"), totalRequests)
 
 }
 
@@ -67,11 +81,6 @@ func serviceDiscoveryReq(route, serviceUrl, method string) {
 	}
 }
 
-func signalUnregisterThread() {
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	<-stop
-	log.Printf("FORCE EXIT")
-	serviceDiscoveryReq("unregister", os.Getenv("LOCALNAME")+":"+os.Getenv("SERVICE_PORT"), "DELETE")
-	os.Exit(0)
+func init() {
+	prometheus.MustRegister(totalRequests)
 }

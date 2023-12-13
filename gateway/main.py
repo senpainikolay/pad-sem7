@@ -9,7 +9,7 @@ from redis_client import RedisClient
 import os 
 from datetime import datetime, timedelta
 
-from dotenv import load_dotenv 
+#from dotenv import load_dotenv 
 
 import logging
 
@@ -17,7 +17,7 @@ import threading
 from saga_coordonator import SagaTransactionCoordinator
  
 
-load_dotenv()
+#load_dotenv()
 
 
 street_hardcoded = "vm 99" 
@@ -440,7 +440,7 @@ def inform_external(params: PostAccidentEntry):
 
     try:
         results = saga_coordonator.execute()
-        return  json.loads({ "data" : [results[0],results[1]] })
+        return  json.dumps({ "data1" : results[0], "data2" : results[1] })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

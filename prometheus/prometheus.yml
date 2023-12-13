@@ -1,0 +1,9 @@
+global:
+  scrape_interval:     10s
+  evaluation_interval: 10s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['localhost:9090', 'service_discovery_pad:8000', 'gateway_pad:8080', 'police_repo1:1221', 'acc_repo1:2112']
