@@ -1,0 +1,281 @@
+version: '3.9'
+services:
+
+  service_discovery:
+      container_name: service_discovery_pad
+      image: nicug/service_discovery:latest
+      ports:
+        - 8000:8000
+
+  gateway:
+      container_name: gateway
+      image: nicug/gateway:latest
+      ports:
+        - 8080:8080
+      environment:
+        - PORT=8080
+        - SERVICE_DISCOVERY_PORT=8000
+        - SERVICE_DISCOVERY_HOST=service_discovery_pad
+        - REDIS_HOST=redis-node-2
+        - REDIS_PORT=7001
+      depends_on:
+        - service_discovery 
+        - pol1
+        - redis-cluster-creator
+  
+  pol1:
+    container_name: police_repo
+    image: nicug/police_reporting_service:latest
+    ports:
+      - "6666:6666" 
+      - "1221:1221"
+
+    environment:
+     - PORT=6666
+     - PORT2=1221
+     - HTTP_PORT=1221
+     - DB_NAME=test_db
+     - SERVICE_PORT=6666
+     - MONGODB_HOST=mongo_pad
+     - MONGODB_PORT=27017
+     - LOCALNAME=police_repo1
+     - SERVICE_DISCOVERY_PORT=8000
+     - SERVICE_DISCOVERY_HOST=service_discovery_pad
+    depends_on:
+      - mongodb
+      - service_discovery 
+
+  pol2:
+    container_name: police_repo2
+    image: nicug/police_reporting_service:latest
+    ports:
+      - "6667:6667" 
+      - "1222:1222"
+    environment:
+     - PORT=6667
+     - PORT2=1222
+     - HTTP_PORT=1222
+     - DB_NAME=test_db
+     - SERVICE_PORT=6667
+     - MONGODB_HOST=mongo_pad
+     - MONGODB_PORT=27017
+     - LOCALNAME=police_repo2
+     - SERVICE_DISCOVERY_PORT=8000
+     - SERVICE_DISCOVERY_HOST=service_discovery_pad
+    depends_on:
+      - mongodb
+      - service_discovery
+  
+  pol3:
+    container_name: police_repo3
+    image: nicug/police_reporting_service:latest
+    ports:
+      - "6668:6668"
+      - "1223:1223"
+    environment:
+     - PORT=6668
+     - PORT2=1223
+     - HTTP_PORT=1223
+     - DB_NAME=test_db
+     - SERVICE_PORT=6668
+     - MONGODB_HOST=mongo_pad
+     - MONGODB_PORT=27017
+     - LOCALNAME=police_repo3
+     - SERVICE_DISCOVERY_PORT=8000
+     - SERVICE_DISCOVERY_HOST=service_discovery_pad
+    depends_on:
+      - mongodb
+      - service_discovery
+
+  acc1:
+    container_name: acc_repo1
+    image: nicug/accident_reporting_service:latest
+    ports:
+      - "6676:6676" 
+      - "2112:2112"
+    environment:
+    - PORT=6676
+    - PORT2=2112
+    - HTTP_PORT=2112
+    - SERVICE_PORT=6676
+    - LOCALNAME=acc_repo1
+    - SERVICE_DISCOVERY_PORT=8000
+    - SERVICE_DISCOVERY_HOST=service_discovery_pad
+    - POSTGRES_HOST=postgres_pad
+    - USER_DB=user
+    - POSTGRES_PW=password
+    - POSTGRES_DB_NAME=test_db
+    - POSTGRES_PORT=5432
+    depends_on:
+      - postgres
+      - service_discovery  
+
+  acc2:
+    container_name: acc_repo2
+    image: nicug/accident_reporting_service:latest
+    ports:
+      - "6677:6677" 
+      - "2113:2113"
+
+    environment:
+    - PORT=6677
+    - PORT2=2113
+    - HTTP_PORT=2113
+    - SERVICE_PORT=6677
+    - LOCALNAME=acc_repo2
+    - SERVICE_DISCOVERY_PORT=8000
+    - SERVICE_DISCOVERY_HOST=service_discovery_pad
+    - POSTGRES_HOST=postgres_pad
+    - USER_DB=user
+    - POSTGRES_PW=password
+    - POSTGRES_DB_NAME=test_db
+    - POSTGRES_PORT=5432
+    depends_on:
+      - postgres
+      - service_discovery  
+
+  acc3:
+    container_name: acc_repo3
+    image: nicug/accident_reporting_service:latest
+    ports:
+      - "6678:6678"
+      - "2114:2114"
+    environment:
+    - PORT=6678
+    - PORT2=2114
+    - HTTP_PORT=2114 
+    - SERVICE_PORT=6678
+    - LOCALNAME=acc_repo3
+    - SERVICE_DISCOVERY_PORT=8000
+    - SERVICE_DISCOVERY_HOST=service_discovery_pad
+    - POSTGRES_HOST=postgres_pad
+    - USER_DB=user
+    - POSTGRES_PW=password
+    - POSTGRES_DB_NAME=test_db
+    - POSTGRES_PORT=5432
+    depends_on:
+      - postgres
+      - service_discovery 
+
+  prometheus:
+    container_name: prometheus_container
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:Z
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - '9090:9090'
+
+
+  grafana:
+    container_name: grafana_container
+    image: grafana/grafana 
+    ports:
+      - '3000:3000'
+    volumes:
+     - ./graphana/datasource.yml:/etc/grafana/provisioning/datasouce.yml
+
+  postgres:
+    container_name: postgres_pad
+    build:
+      context: ./accident-reporting-service
+      dockerfile: Dockerfile-postgresdb
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-db:/data/postgres
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=user
+      - POSTGRES_DB=test_db  
+
+
+  mongodb:
+    image: mongo:6-jammy
+    container_name: mongo_pad
+    ports:
+      - '27017:27017'
+    volumes: 
+      - mongodb:/data/mongo  
+
+
+  redis-node-1:
+    image: redis:7.2
+    ports:
+      - 7000:7000
+    container_name: redis-node-1
+    volumes:
+      - ./redis:/redis
+    command: redis-server /redis/redis0.conf
+
+  redis-node-2:
+    image: redis:7.2
+    ports:
+      - 7001:7001
+    container_name: redis-node-2
+    volumes:
+      - ./redis:/redis
+    command: redis-server /redis/redis1.conf
+
+  redis-node-3:
+    image: redis:7.2
+    ports:
+      - 7002:7002
+    container_name: redis-node-3
+    volumes:
+      - ./redis:/redis
+    command: redis-server /redis/redis2.conf
+
+  redis-node-4:
+    image: redis:7.2
+    ports:
+      - 7003:7003
+    container_name: redis-node-4
+    volumes:
+      - ./redis:/redis
+    command: redis-server /redis/redis3.conf
+
+  redis-node-5:
+    image: redis:7.2
+    ports:
+      - 7004:7004
+    container_name: redis-node-5
+    volumes:
+      - ./redis:/redis
+    command: redis-server /redis/redis4.conf
+
+  redis-node-6:
+    image: redis:7.2
+    ports:
+      - 7005:7005
+    container_name: redis-node-6
+    volumes:
+      - ./redis:/redis
+    command: redis-server /redis/redis5.conf
+
+  redis-cluster-creator:
+    image: redis:7.2
+    ports:
+      - 7010:7010
+    command: redis-cli -p 7000 --cluster create redis-node-1:7000 redis-node-2:7001 redis-node-3:7002 redis-node-4:7003 redis-node-5:7004 redis-node-6:7005 --cluster-replicas 1 --cluster-yes
+    depends_on:
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+      - redis-node-4
+      - redis-node-5
+      - redis-node-6
+
+volumes:
+  postgres-db:
+    driver: local 
+  mongodb:
+    driver: local 
+
+
+
+
