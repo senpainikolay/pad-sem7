@@ -4,8 +4,10 @@ WORKDIR /app
 
 COPY . /app
 
+ENV PORT=$port
+
 RUN pip install -r requirements.txt
 
-EXPOSE 8080
+EXPOSE $port
 
 CMD ["python", "main.py"]

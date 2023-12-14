@@ -8,6 +8,8 @@ from load_balancer import LoadBalancer
 from redis_client import RedisClient
 import os 
 from datetime import datetime, timedelta
+from prometheus_client import Counter, generate_latest
+
 
 #from dotenv import load_dotenv 
 
@@ -15,10 +17,18 @@ import logging
 
 import threading
 from saga_coordonator import SagaTransactionCoordinator
+
+from starlette.responses import Response
+
  
 
 #load_dotenv()
 
+total_requests = Counter(
+    "pad_req_counter",
+    "Count the requests made by users.",
+    ["Status"]
+)
 
 street_hardcoded = "vm 99" 
 logger = logging.getLogger("GATEWAY_LOGGER") 
@@ -34,6 +44,11 @@ Redis_Client = RedisClient(host = os.getenv("REDIS_HOST"), port=os.getenv("REDIS
 TIMEOUT_SECONDS = 3
 REROUTE_THRESHOLD = 2
 app = FastAPI() 
+
+
+@app.get("/metrics")
+def get_metrics():
+    return Response(content= generate_latest(), media_type="text/plain") 
 
 
 class UserGeoInfo(BaseModel):
@@ -77,6 +92,8 @@ def fetch_police(params: UserGeoInfo,reroute_counter=0):
             Redis_Client.add_pol_coords(params.city, json.loads(response_json))
         except Exception as e:
             logger.info(str(e))
+
+        total_requests.labels(Status="Success").inc()
         return  json.loads(response_json) 
 
     except Exception as e:
@@ -89,6 +106,7 @@ def fetch_police(params: UserGeoInfo,reroute_counter=0):
             )
 
             thread.start()
+            total_requests.labels(Status="Failed").inc()
 
             return fetch_police(params, reroute_counter + 1 )
 
@@ -138,6 +156,8 @@ def fetch_accs(params: UserGeoInfo,reroute_counter=0):
             Redis_Client.add_acc_coords(params.city, json.loads(response_json))
         except Exception as e:
             logger.info(str(e))
+
+        total_requests.labels(Status="Success").inc()
         return  json.loads(response_json)
 
     except Exception as e:
@@ -150,6 +170,7 @@ def fetch_accs(params: UserGeoInfo,reroute_counter=0):
             )
 
             thread.start()
+            total_requests.labels(Status="Failed").inc()
 
             return fetch_accs(params, reroute_counter + 1 )
 
@@ -190,7 +211,9 @@ def post_police(params: PolicePostParams,reroute_counter=0):
         try:
             Redis_Client.delete_pol_city_info(params.city)
         except Exception as e:
-            logger.info(str(e))      
+            logger.info(str(e))   
+
+        total_requests.labels(Status="Success").inc()
         return  json.loads(response_json)
     
     except Exception as e:
@@ -203,6 +226,7 @@ def post_police(params: PolicePostParams,reroute_counter=0):
             )
 
             thread.start()
+            total_requests.labels(Status="Failed").inc()
 
             return fetch_police(params, reroute_counter + 1 )
 
@@ -245,6 +269,9 @@ def post_accident(params: PostAccidentEntry,reroute_counter=0):
             Redis_Client.delete_acc_city_info(params.city)
         except Exception as e:
             logger.info(str(e))
+
+
+        total_requests.labels(Status="Success").inc()
         return  json.loads(response_json)
 
     except Exception as e:
@@ -257,6 +284,8 @@ def post_accident(params: PostAccidentEntry,reroute_counter=0):
             )
 
             thread.start()
+
+            total_requests.labels(Status="Failed").inc()
 
             return post_accident(params, reroute_counter + 1 )
 
@@ -301,6 +330,7 @@ def confirm_police(params: PoliceConfirmParams,reroute_counter=0):
         except Exception as e:
             logger.info(str(e))    
 
+        total_requests.labels(Status="Success").inc()
         return  json.loads(response_json)
 
     except Exception as e:
@@ -313,6 +343,8 @@ def confirm_police(params: PoliceConfirmParams,reroute_counter=0):
             )
 
             thread.start()
+
+            total_requests.labels(Status="Failed").inc()
 
             return confirm_police(params, reroute_counter + 1 )
 
@@ -356,7 +388,8 @@ def confirm_accident(params: ConfirmAccidentEntry,reroute_counter=0):
             Redis_Client.delete_acc_city_info(params.city)
         except Exception as e:
             logger.info(str(e))    
-              
+        total_requests.labels(Status="Success").inc()
+
         return  json.loads(response_json)
 
     except Exception as e:
@@ -369,7 +402,7 @@ def confirm_accident(params: ConfirmAccidentEntry,reroute_counter=0):
             )
 
             thread.start()
-
+            total_requests.labels(Status="Failed").inc()
             return fetch_accs(params, reroute_counter + 1 )
 
 
@@ -440,8 +473,10 @@ def inform_external(params: PostAccidentEntry):
 
     try:
         results = saga_coordonator.execute()
-        return  json.dumps({ "data1" : results[0], "data2" : results[1] })
+        total_requests.labels(Status="Success").inc()
+        return  json.loads(json.dumps({ "accident_status" : results[0], "police_reported_in_are" : results[1] }))
     except Exception as e:
+        total_requests.labels(Status="Failed").inc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -449,4 +484,4 @@ def inform_external(params: PostAccidentEntry):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT")))
